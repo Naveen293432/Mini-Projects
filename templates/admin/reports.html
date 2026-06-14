@@ -1,0 +1,131 @@
+{% extends "dashboard_base.html" %}
+
+{% block title %}System Reports - CloudDB Secure{% endblock %}
+
+{% block sidebar %}
+<li><a href="{{ url_for('admin.dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+<li><a href="{{ url_for('admin.user_management') }}"><i class="fas fa-users"></i> User Management</a></li>
+<li><a href="{{ url_for('admin.fee_configuration') }}"><i class="fas fa-money-bill-wave"></i> Fee Configuration</a></li>
+<li><a href="{{ url_for('admin.complaint_review') }}"><i class="fas fa-comment-dots"></i> Complaint Review</a></li>
+<li><a href="{{ url_for('admin.system_reports') }}" class="active"><i class="fas fa-chart-bar"></i> System Reports</a></li>
+<li><a href="{{ url_for('admin.audit_logs') }}"><i class="fas fa-history"></i> Audit Logs</a></li>
+<li><a href="{{ url_for('admin.secrets') }}"><i class="fas fa-key"></i> Secret Sharing</a></li>
+{% endblock %}
+
+{% block main %}
+<div class="page-header">
+    <h1 class="page-title"><i class="fas fa-chart-bar"></i> System Reports</h1>
+    <p class="page-subtitle">Analytics and statistics overview</p>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon" style="background: #E9D5FF;">
+            <i class="fas fa-user-shield" style="color: #9333EA;"></i>
+        </div>
+        <div class="stat-content">
+            <h3>{{ stats.users_by_role.administrator }}</h3>
+            <p>Administrators</p>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon" style="background: #DBEAFE;">
+            <i class="fas fa-database" style="color: #3B82F6;"></i>
+        </div>
+        <div class="stat-content">
+            <h3>{{ stats.users_by_role.dbmanager }}</h3>
+            <p>DB Managers</p>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-content">
+            <h3>{{ stats.users_by_role.user }}</h3>
+            <p>Regular Users</p>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon" style="background: #D1FAE5;">
+            <i class="fas fa-dollar-sign" style="color: #059669;"></i>
+        </div>
+        <div class="stat-content">
+            <h3>
+                {% if currency_display == 'usd' %}
+                    ${{ "%.2f"|format(stats.total_revenue) }}
+                {% elif currency_display == 'inr' %}
+                    ₹{{ "%.2f"|format(stats.total_revenue|to_inr) }}
+                {% else %}
+                    ${{ "%.2f"|format(stats.total_revenue) }} &nbsp; / &nbsp; ₹{{ "%.2f"|format(stats.total_revenue|to_inr) }}
+                {% endif %}
+            </h3>
+            <p>Total Revenue</p>
+        </div>
+    </div>
+</div>
+
+<div class="grid-2">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-chart-pie"></i> Complaint Status</h3>
+        </div>
+        <div style="padding: 20px;">
+            <div style="margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span>Pending</span>
+                    <span style="font-weight: 600;">{{ stats.complaints_by_status.Pending }}</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {% if stats.complaints_by_status.Pending + stats.complaints_by_status['In Review'] + stats.complaints_by_status.Resolved > 0 %}{{ (stats.complaints_by_status.Pending / (stats.complaints_by_status.Pending + stats.complaints_by_status['In Review'] + stats.complaints_by_status.Resolved) * 100)|int }}%{% else %}0%{% endif %}; background: #FBBF24;"></div>
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span>In Review</span>
+                    <span style="font-weight: 600;">{{ stats.complaints_by_status['In Review'] }}</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {% if stats.complaints_by_status.Pending + stats.complaints_by_status['In Review'] + stats.complaints_by_status.Resolved > 0 %}{{ (stats.complaints_by_status['In Review'] / (stats.complaints_by_status.Pending + stats.complaints_by_status['In Review'] + stats.complaints_by_status.Resolved) * 100)|int }}%{% else %}0%{% endif %}; background: #60A5FA;"></div>
+                </div>
+            </div>
+            
+            <div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span>Resolved</span>
+                    <span style="font-weight: 600;">{{ stats.complaints_by_status.Resolved }}</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {% if stats.complaints_by_status.Pending + stats.complaints_by_status['In Review'] + stats.complaints_by_status.Resolved > 0 %}{{ (stats.complaints_by_status.Resolved / (stats.complaints_by_status.Pending + stats.complaints_by_status['In Review'] + stats.complaints_by_status.Resolved) * 100)|int }}%{% else %}0%{% endif %}; background: #4ADE80;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-receipt"></i> Payment Summary</h3>
+        </div>
+        <div style="text-align: center; padding: 40px;">
+            <div style="width: 120px; height: 120px; background: linear-gradient(135deg, var(--pink-400), var(--deep-pink)); border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0 auto 20px; color: white;">
+                <span style="font-size: 2rem; font-weight: 700;">{{ stats.total_payments }}</span>
+                <span style="font-size: 0.8rem;">Payments</span>
+            </div>
+            <h4 style="color: var(--text-primary); margin-bottom: 8px;">Total Revenue</h4>
+            <p style="font-size: 2rem; font-weight: 700; color: var(--pink-500);">
+                {% if currency_display == 'usd' %}
+                    ${{ "%.2f"|format(stats.total_revenue) }}
+                {% elif currency_display == 'inr' %}
+                    ₹{{ "%.2f"|format(stats.total_revenue|to_inr) }}
+                {% else %}
+                    ${{ "%.2f"|format(stats.total_revenue) }} &nbsp; / &nbsp; ₹{{ "%.2f"|format(stats.total_revenue|to_inr) }}
+                {% endif %}
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

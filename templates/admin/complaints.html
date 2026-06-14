@@ -1,0 +1,109 @@
+{% extends "dashboard_base.html" %}
+
+{% block title %}Complaint Review - CloudDB Secure{% endblock %}
+
+{% block sidebar %}
+<li><a href="{{ url_for('admin.dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+<li><a href="{{ url_for('admin.user_management') }}"><i class="fas fa-users"></i> User Management</a></li>
+<li><a href="{{ url_for('admin.fee_configuration') }}"><i class="fas fa-money-bill-wave"></i> Fee Configuration</a></li>
+<li><a href="{{ url_for('admin.complaint_review') }}" class="active"><i class="fas fa-comment-dots"></i> Complaint Review</a></li>
+<li><a href="{{ url_for('admin.system_reports') }}"><i class="fas fa-chart-bar"></i> System Reports</a></li>
+<li><a href="{{ url_for('admin.audit_logs') }}"><i class="fas fa-history"></i> Audit Logs</a></li>
+<li><a href="{{ url_for('admin.secrets') }}"><i class="fas fa-key"></i> Secret Sharing</a></li>
+{% endblock %}
+
+{% block main %}
+<div class="page-header">
+    <h1 class="page-title"><i class="fas fa-comment-dots"></i> Complaint Review</h1>
+    <p class="page-subtitle">Review and respond to user complaints</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">All Complaints ({{ complaints|length }})</h3>
+    </div>
+    
+    {% if complaints %}
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Subject</th>
+                    <th>Category</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for complaint in complaints %}
+                <tr>
+                    <td>{{ complaint.user_name }}</td>
+                    <td>{{ complaint.subject }}</td>
+                    <td>{{ complaint.category }}</td>
+                    <td>
+                        <span class="status-badge {% if complaint.priority == 'High' %}status-pending{% elif complaint.priority == 'Medium' %}status-in-review{% else %}status-completed{% endif %}">
+                            {{ complaint.priority }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="status-badge status-{{ complaint.status|lower|replace(' ', '-') }}">
+                            {{ complaint.status }}
+                        </span>
+                    </td>
+                    <td>{{ complaint.created_at[:10] if complaint.created_at else 'N/A' }}</td>
+                    <td>
+                        <button class="btn btn-primary btn-sm modal-trigger" data-modal="complaintModal{{ complaint.doc_id }}">
+                            <i class="fas fa-eye"></i> Review
+                        </button>
+                    </td>
+                </tr>
+                
+                <div id="complaintModal{{ complaint.doc_id }}" class="modal">
+                    <div class="modal-content" style="max-width: 600px;">
+                        <div class="modal-header">
+                            <h3 class="modal-title">Review Complaint</h3>
+                            <button class="modal-close">&times;</button>
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <p><strong>From:</strong> {{ complaint.user_name }}</p>
+                            <p><strong>Category:</strong> {{ complaint.category }}</p>
+                            <p><strong>Priority:</strong> {{ complaint.priority }}</p>
+                            <p><strong>Subject:</strong> {{ complaint.subject }}</p>
+                            <div style="background: var(--pink-50); padding: 16px; border-radius: 8px; margin-top: 12px;">
+                                <strong>Description:</strong>
+                                <p style="margin-top: 8px;">{{ complaint.description }}</p>
+                            </div>
+                        </div>
+                        <form method="POST" action="{{ url_for('admin.update_complaint_route', complaint_id=complaint.doc_id) }}">
+                            <div class="form-group">
+                                <label class="form-label">Status</label>
+                                <select name="status" class="form-control form-select">
+                                    <option value="Pending" {% if complaint.status == 'Pending' %}selected{% endif %}>Pending</option>
+                                    <option value="In Review" {% if complaint.status == 'In Review' %}selected{% endif %}>In Review</option>
+                                    <option value="Resolved" {% if complaint.status == 'Resolved' %}selected{% endif %}>Resolved</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Admin Response</label>
+                                <textarea name="response" class="form-control" placeholder="Write your response...">{{ complaint.admin_response }}</textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Update Complaint</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-comment-dots"></i>
+        <h3>No Complaints</h3>
+        <p>No complaints have been submitted yet.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

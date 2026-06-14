@@ -1,0 +1,151 @@
+{% extends "dashboard_base.html" %}
+
+{% block title %}User Management - CloudDB Secure{% endblock %}
+
+{% block sidebar %}
+<li><a href="{{ url_for('admin.dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+<li><a href="{{ url_for('admin.user_management') }}" class="active"><i class="fas fa-users"></i> User Management</a>
+</li>
+<li><a href="{{ url_for('admin.fee_configuration') }}"><i class="fas fa-money-bill-wave"></i> Fee Configuration</a></li>
+<li><a href="{{ url_for('admin.complaint_review') }}"><i class="fas fa-comment-dots"></i> Complaint Review</a></li>
+<li><a href="{{ url_for('admin.system_reports') }}"><i class="fas fa-chart-bar"></i> System Reports</a></li>
+<li><a href="{{ url_for('admin.audit_logs') }}"><i class="fas fa-history"></i> Audit Logs</a></li>
+<li><a href="{{ url_for('admin.secrets') }}"><i class="fas fa-key"></i> Secret Sharing</a></li>
+{% endblock %}
+
+{% block main %}
+<div class="page-header">
+    <h1 class="page-title"><i class="fas fa-users"></i> User Management</h1>
+    <p class="page-subtitle">
+        {% if view == 'pending' %}
+        Showing users waiting for administrator approval
+        {% else %}
+        Manage all registered users in the system
+        {% endif %}
+    </p>
+</div>
+
+<div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px;">
+    <a href="{{ url_for('admin.user_management') }}"
+        class="btn {% if view != 'pending' %}btn-primary{% else %}btn-secondary{% endif %}">All Users</a>
+    <a href="{{ url_for('admin.user_management', status='pending') }}"
+        class="btn {% if view == 'pending' %}btn-primary{% else %}btn-secondary{% endif %}">Pending Users</a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">All Users ({{ users|length }})</h3>
+    </div>
+
+    {% if users %}
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Phone</th>
+                    <th>Joined</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div
+                                style="width: 36px; height: 36px; background: var(--pink-100); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-user" style="color: var(--pink-500);"></i>
+                            </div>
+                            <div>
+                                <div style="font-weight: 600;">{{ user.username }}</div>
+                                <div style="font-size: 0.8rem; color: var(--text-secondary);">{{ user.full_name or 'N/A'
+                                    }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>{{ user.email }}</td>
+                    <td>
+                        <span class="role-badge {{ user.role }}">{{ user.role }}</span>
+                    </td>
+                    <td>
+                        {% if user.role == 'user' and not user.approved %}
+                        <span class="role-badge" style="background: rgba(255, 193, 7, 0.15); color: #f59e0b;">Pending
+                            Approval</span>
+                        {% elif user.role == 'user' %}
+                        <span class="role-badge"
+                            style="background: rgba(16, 185, 129, 0.15); color: #10b981;">Approved</span>
+                        {% else %}
+                        <span class="role-badge" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6;">System
+                            Account</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ user.phone or 'N/A' }}</td>
+                    <td>{{ user.created_at[:10] if user.created_at else 'N/A' }}</td>
+                    <td>
+                        <div class="action-buttons">
+                            {% if user.role == 'user' and not user.approved %}
+                            <form method="POST" action="{{ url_for('admin.approve_user_route', user_id=user.id) }}"
+                                style="display: inline;">
+                                <button type="submit" class="btn btn-success btn-sm">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                            <button class="btn btn-secondary btn-sm modal-trigger" data-modal="editModal{{ user.id }}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            {% if user.id != current_user.id %}
+                            <form method="POST" action="{{ url_for('admin.delete_user_route', user_id=user.id) }}"
+                                style="display: inline;"
+                                onsubmit="return confirm('Are you sure you want to delete this user?');">
+                                <button type="submit" class="btn btn-danger btn-sm">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+
+                <div id="editModal{{ user.id }}" class="modal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3 class="modal-title">Edit User Role</h3>
+                            <button class="modal-close">&times;</button>
+                        </div>
+                        <form method="POST" action="{{ url_for('admin.edit_user', user_id=user.id) }}">
+                            <div class="form-group">
+                                <label class="form-label">Username</label>
+                                <input type="text" class="form-control" value="{{ user.username }}" disabled>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Role</label>
+                                <select name="role" class="form-control form-select">
+                                    <option value="administrator" {% if user.role=='administrator' %}selected{% endif
+                                        %}>Administrator</option>
+                                    <option value="dbmanager" {% if user.role=='dbmanager' %}selected{% endif %}>
+                                        Database Manager</option>
+                                    <option value="user" {% if user.role=='user' %}selected{% endif %}>User</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-users"></i>
+        <h3>No Users Found</h3>
+        <p>No users have registered yet.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

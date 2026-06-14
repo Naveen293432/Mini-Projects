@@ -1,0 +1,97 @@
+{% extends "dashboard_base.html" %}
+
+{% block title %}DB Monitoring - CloudDB Secure{% endblock %}
+
+{% block sidebar %}
+<li><a href="{{ url_for('dbmanager.dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+<li><a href="{{ url_for('dbmanager.db_monitoring') }}" class="active"><i class="fas fa-server"></i> DB Monitoring</a></li>
+<li><a href="{{ url_for('dbmanager.file_management') }}"><i class="fas fa-folder-open"></i> File Management</a></li>
+<li><a href="{{ url_for('dbmanager.encrypted_downloads') }}"><i class="fas fa-lock"></i> Encrypted Downloads</a></li>
+<li><a href="{{ url_for('dbmanager.maintenance_scheduling') }}"><i class="fas fa-calendar-alt"></i> Maintenance</a></li>
+<li><a href="{{ url_for('dbmanager.performance_analytics') }}"><i class="fas fa-chart-line"></i> Analytics</a></li>
+<li><a href="{{ url_for('dbmanager.secrets') }}"><i class="fas fa-key"></i> Secret Sharing</a></li>
+{% endblock %}
+
+{% block main %}
+<div class="page-header">
+    <h1 class="page-title"><i class="fas fa-server"></i> Database Monitoring</h1>
+    <p class="page-subtitle">Monitor database health and storage metrics</p>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-hdd"></i>
+        </div>
+        <div class="stat-content">
+            <h3>{{ (stats.total_storage / 1024)|round(2) }} KB</h3>
+            <p>Storage Used</p>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon" style="background: #DBEAFE;">
+            <i class="fas fa-file" style="color: #2563EB;"></i>
+        </div>
+        <div class="stat-content">
+            <h3>{{ stats.total_files }}</h3>
+            <p>Total Files</p>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon" style="background: #D1FAE5;">
+            <i class="fas fa-users" style="color: #059669;"></i>
+        </div>
+        <div class="stat-content">
+            <h3>{{ stats.total_users }}</h3>
+            <p>Active Users</p>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon" style="background: #FEF3C7;">
+            <i class="fas fa-exchange-alt" style="color: #D97706;"></i>
+        </div>
+        <div class="stat-content">
+            <h3>{{ stats.total_transactions }}</h3>
+            <p>Transactions</p>
+        </div>
+    </div>
+</div>
+
+<div class="grid-2">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-database"></i> Database Status</h3>
+        </div>
+        <div style="padding: 20px;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                <div style="width: 12px; height: 12px; background: #4ADE80; border-radius: 50%;"></div>
+                <span style="font-weight: 600;">TinyDB Connected</span>
+            </div>
+            <div style="background: var(--pink-50); padding: 16px; border-radius: 8px;">
+                <p style="font-family: 'JetBrains Mono', monospace; font-size: 0.9rem;">
+                    <strong>Database:</strong> data/database.json<br>
+                    <strong>Type:</strong> TinyDB (JSON-based)<br>
+                    <strong>Status:</strong> <span style="color: #059669;">Online</span><br>
+                    <strong>Encryption:</strong> PKCS1_OAEP
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-cloud"></i> Cloud Transfer</h3>
+        </div>
+        <div style="text-align: center; padding: 30px;">
+            <svg width="150" height="100" viewBox="0 0 150 100">
+                <path d="M30 60 Q30 40 50 40 Q50 20 80 20 Q110 20 110 40 Q130 40 130 60 Q130 80 110 80 L50 80 Q30 80 30 60" fill="none" stroke="var(--pink-400)" stroke-width="3"/>
+                <path d="M75 50 L75 90 M65 75 L75 90 L85 75" fill="none" stroke="var(--pink-500)" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <p style="color: var(--text-secondary); margin-top: 16px;">Secure cloud transfer active</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

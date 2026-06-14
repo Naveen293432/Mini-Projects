@@ -1,0 +1,109 @@
+{% extends "dashboard_base.html" %}
+
+{% block title %}Performance Analytics - CloudDB Secure{% endblock %}
+
+{% block sidebar %}
+<li><a href="{{ url_for('dbmanager.dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+<li><a href="{{ url_for('dbmanager.db_monitoring') }}"><i class="fas fa-server"></i> DB Monitoring</a></li>
+<li><a href="{{ url_for('dbmanager.file_management') }}"><i class="fas fa-folder-open"></i> File Management</a></li>
+<li><a href="{{ url_for('dbmanager.encrypted_downloads') }}"><i class="fas fa-lock"></i> Encrypted Downloads</a></li>
+<li><a href="{{ url_for('dbmanager.maintenance_scheduling') }}"><i class="fas fa-calendar-alt"></i> Maintenance</a></li>
+<li><a href="{{ url_for('dbmanager.performance_analytics') }}" class="active"><i class="fas fa-chart-line"></i> Analytics</a></li>
+<li><a href="{{ url_for('dbmanager.secrets') }}"><i class="fas fa-key"></i> Secret Sharing</a></li>
+{% endblock %}
+
+{% block main %}
+<div class="page-header">
+    <h1 class="page-title"><i class="fas fa-chart-line"></i> Performance Analytics</h1>
+    <p class="page-subtitle">Database performance and file statistics</p>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon" style="background: #D1FAE5;">
+            <i class="fas fa-lock" style="color: #059669;"></i>
+        </div>
+        <div class="stat-content">
+            <h3>{{ stats.files_by_type.encrypted }}</h3>
+            <p>Encrypted Files</p>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon" style="background: #FEF3C7;">
+            <i class="fas fa-unlock" style="color: #D97706;"></i>
+        </div>
+        <div class="stat-content">
+            <h3>{{ stats.files_by_type.unencrypted }}</h3>
+            <p>Unencrypted Files</p>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-hdd"></i>
+        </div>
+        <div class="stat-content">
+            <h3>{{ (stats.storage_used / 1024)|round(2) }} KB</h3>
+            <p>Total Storage</p>
+        </div>
+    </div>
+</div>
+
+<div class="grid-2">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-chart-pie"></i> File Distribution</h3>
+        </div>
+        <div style="padding: 20px;">
+            <div style="margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span><i class="fas fa-lock" style="color: #059669;"></i> Encrypted</span>
+                    <span style="font-weight: 600;">{{ stats.files_by_type.encrypted }}</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {% if stats.files_by_type.encrypted + stats.files_by_type.unencrypted > 0 %}{{ (stats.files_by_type.encrypted / (stats.files_by_type.encrypted + stats.files_by_type.unencrypted) * 100)|int }}%{% else %}0%{% endif %}; background: #4ADE80;"></div>
+                </div>
+            </div>
+            
+            <div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span><i class="fas fa-unlock" style="color: #D97706;"></i> Unencrypted</span>
+                    <span style="font-weight: 600;">{{ stats.files_by_type.unencrypted }}</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {% if stats.files_by_type.encrypted + stats.files_by_type.unencrypted > 0 %}{{ (stats.files_by_type.unencrypted / (stats.files_by_type.encrypted + stats.files_by_type.unencrypted) * 100)|int }}%{% else %}0%{% endif %}; background: #FBBF24;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-wrench"></i> Maintenance Status</h3>
+        </div>
+        <div style="padding: 20px;">
+            <div style="display: flex; justify-content: space-around; text-align: center;">
+                <div>
+                    <div style="width: 60px; height: 60px; background: #DBEAFE; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px;">
+                        <span style="font-size: 1.5rem; font-weight: 700; color: #2563EB;">{{ stats.maintenance_stats.Scheduled }}</span>
+                    </div>
+                    <span style="font-size: 0.8rem; color: var(--text-secondary);">Scheduled</span>
+                </div>
+                <div>
+                    <div style="width: 60px; height: 60px; background: #FEF3C7; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px;">
+                        <span style="font-size: 1.5rem; font-weight: 700; color: #D97706;">{{ stats.maintenance_stats['In Progress'] }}</span>
+                    </div>
+                    <span style="font-size: 0.8rem; color: var(--text-secondary);">In Progress</span>
+                </div>
+                <div>
+                    <div style="width: 60px; height: 60px; background: #D1FAE5; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px;">
+                        <span style="font-size: 1.5rem; font-weight: 700; color: #059669;">{{ stats.maintenance_stats.Completed }}</span>
+                    </div>
+                    <span style="font-size: 0.8rem; color: var(--text-secondary);">Completed</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

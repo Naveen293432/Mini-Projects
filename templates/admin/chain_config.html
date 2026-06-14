@@ -1,0 +1,89 @@
+{% extends "dashboard_base.html" %}
+
+{% block title %}Algorand Config Health - Admin{% endblock %}
+
+{% block sidebar %}
+<li><a href="{{ url_for('admin.dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+<li><a href="{{ url_for('admin.user_management') }}"><i class="fas fa-users"></i> User Management</a></li>
+<li><a href="{{ url_for('admin.fee_configuration') }}"><i class="fas fa-money-bill-wave"></i> Fee Configuration</a></li>
+<li><a href="{{ url_for('admin.complaint_review') }}"><i class="fas fa-comment-dots"></i> Complaint Review</a></li>
+<li><a href="{{ url_for('admin.system_reports') }}"><i class="fas fa-chart-bar"></i> System Reports</a></li>
+<li><a href="{{ url_for('admin.audit_logs') }}"><i class="fas fa-history"></i> Audit Logs</a></li>
+<li><a href="{{ url_for('admin.secrets') }}"><i class="fas fa-key"></i> Secret Sharing</a></li>
+<li><a href="{{ url_for('admin.chain_view') }}"><i class="fas fa-link"></i> Algorand Ledger</a></li>
+<li><a href="{{ url_for('admin.chain_config') }}" class="active"><i class="fas fa-heartbeat"></i> Chain Config Health</a></li>
+{% endblock %}
+
+{% block main %}
+<div class="page-header">
+    <h1 class="page-title">Algorand Configuration Health</h1>
+    <p class="page-subtitle">Validate receiver address configuration used for invoice QR payload generation.</p>
+</div>
+
+<div class="card" style="max-width:900px;">
+    <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-link"></i> Receiver Address Status</h3>
+    </div>
+    <div style="padding:16px;">
+        <p class="section-note"><strong>Status:</strong>
+            {% if is_valid %}
+            <span style="color:#0f7b0f;">Valid</span>
+            {% else %}
+            <span style="color:#b00020;">Invalid or missing</span>
+            {% endif %}
+        </p>
+
+        <p class="section-note"><strong>Raw ALGORAND_RECEIVER_ADDRESS:</strong></p>
+        <span class="path-pill">{{ raw_receiver or '(empty)' }}</span>
+
+        <p class="section-note" style="margin-top:14px;"><strong>Normalized Address Used By App:</strong></p>
+        <span class="path-pill">{{ normalized_receiver or '(none)' }}</span>
+
+        <p class="section-note" style="margin-top:14px;"><strong>Sample Invoice URI:</strong></p>
+        <span class="path-pill">{{ sample_uri or '(not available because address is invalid)' }}</span>
+
+        {% if not is_valid %}
+        <div style="margin-top:16px; padding:12px; border-radius:4px; background:#fde7e9; border:1px solid #f5b5bc; color:#5a1117;">
+            <p style="margin:0 0 8px 0;"><strong>Fix Required:</strong> Set ALGORAND_RECEIVER_ADDRESS to a valid 58-character Algorand wallet address.</p>
+            <p style="margin:0; font-size:13px;">After updating environment variables, restart the app so invoice QR links use the new value.</p>
+        </div>
+        {% endif %}
+
+        <div style="margin-top:16px;">
+            <a href="{{ url_for('admin.chain_view') }}" class="btn btn-secondary btn-sm">Back to Algorand Ledger</a>
+        </div>
+    </div>
+</div>
+
+<div class="grid-2" style="margin-top: 24px; max-width: 900px;">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-database"></i> Raw Config</h3>
+        </div>
+        <p class="section-note">
+            This shows the exact environment value the app reads before normalization.
+        </p>
+        <span class="path-pill">{{ raw_receiver or '(empty)' }}</span>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-check-circle"></i> App Output</h3>
+        </div>
+        <p class="section-note">
+            This is the address format the app will actually use for QR and invoice generation.
+        </p>
+        <span class="path-pill">{{ normalized_receiver or '(none)' }}</span>
+    </div>
+</div>
+
+<div class="card" style="max-width:900px;">
+    <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-qrcode"></i> Sample QR Payload</h3>
+    </div>
+    <div style="padding:16px;">
+        <p class="section-note">This is the QR payload preview generated from the configured receiver address.</p>
+        <span class="path-pill">{{ sample_uri or '(not available because address is invalid)' }}</span>
+    </div>
+</div>
+{% endblock %}

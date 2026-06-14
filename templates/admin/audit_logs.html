@@ -1,0 +1,48 @@
+{% extends "dashboard_base.html" %}
+
+{% block title %}Audit Logs - CloudDB Secure{% endblock %}
+
+{% block sidebar %}
+<li><a href="{{ url_for('admin.dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+<li><a href="{{ url_for('admin.user_management') }}"><i class="fas fa-users"></i> User Management</a></li>
+<li><a href="{{ url_for('admin.fee_configuration') }}"><i class="fas fa-money-bill-wave"></i> Fee Configuration</a></li>
+<li><a href="{{ url_for('admin.complaint_review') }}"><i class="fas fa-comment-dots"></i> Complaint Review</a></li>
+<li><a href="{{ url_for('admin.system_reports') }}"><i class="fas fa-chart-bar"></i> System Reports</a></li>
+<li><a href="{{ url_for('admin.audit_logs') }}" class="active"><i class="fas fa-history"></i> Audit Logs</a></li>
+<li><a href="{{ url_for('admin.secrets') }}"><i class="fas fa-key"></i> Secret Sharing</a></li>
+{% endblock %}
+
+{% block main %}
+<div class="page-header">
+    <h1 class="page-title"><i class="fas fa-history"></i> Audit Logs</h1>
+    <p class="page-subtitle">Track all system activities and user actions</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Activity Timeline</h3>
+    </div>
+    
+    {% if logs %}
+    <div class="timeline" style="padding: 20px;">
+        {% for log in logs[:50] %}
+        <div class="timeline-item">
+            <div class="timeline-content">
+                <div class="timeline-date">{{ log.created_at }}</div>
+                <div class="timeline-title">{{ log.action }}</div>
+                <div class="timeline-description">
+                    <strong>{{ log.user_name }}</strong> - {{ log.details }}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-history"></i>
+        <h3>No Activity Yet</h3>
+        <p>System activities will appear here.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

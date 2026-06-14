@@ -1,0 +1,114 @@
+{% extends "dashboard_base.html" %}
+
+{% block title %}File Upload & Encryption - CloudDB Secure{% endblock %}
+
+{% block sidebar %}
+<li><a href="{{ url_for('user.dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+<li><a href="{{ url_for('user.fee_payment') }}"><i class="fas fa-credit-card"></i> Fee Payment</a></li>
+<li><a href="{{ url_for('user.complaints') }}"><i class="fas fa-comment-dots"></i> Complaints</a></li>
+<li><a href="{{ url_for('user.file_upload') }}" class="active"><i class="fas fa-upload"></i> Upload & Encrypt</a></li>
+<li><a href="{{ url_for('user.file_download') }}"><i class="fas fa-download"></i> Download Files</a></li>
+<li><a href="{{ url_for('user.service_history') }}"><i class="fas fa-history"></i> Service History</a></li>
+<li><a href="{{ url_for('user.secrets') }}"><i class="fas fa-key"></i> Secret Sharing</a></li>
+{% endblock %}
+
+{% block main %}
+<div class="page-header">
+    <h1 class="page-title"><i class="fas fa-upload"></i> File Upload & Encryption</h1>
+    <p class="page-subtitle">Upload files and encrypt them using PKCS1_OAEP</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-cloud-upload-alt"></i> Upload & Encrypt File</h3>
+    </div>
+    <form method="POST" action="{{ url_for('user.upload_file') }}" enctype="multipart/form-data">
+        <div class="file-upload-zone" onclick="document.getElementById('fileInput').click();">
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="var(--pink-400)" stroke-width="1.5">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                <path d="M17 8l-5-5-5 5"/>
+                <path d="M12 3v12"/>
+            </svg>
+            <h4>Drop your file here or click to browse</h4>
+            <p>Your file will be automatically encrypted using PKCS1_OAEP with hybrid RSA-AES encryption</p>
+            <input type="file" id="fileInput" name="file" style="display: none;" required onchange="updateFileName(this)">
+        </div>
+        <div id="fileName" style="margin-top: 12px; text-align: center; font-weight: 600; color: var(--pink-500);"></div>
+        
+        <div style="margin-top: 24px; text-align: center;">
+            <button type="submit" class="btn btn-primary" style="padding: 14px 32px;">
+                <i class="fas fa-lock"></i> Encrypt & Upload
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="card" style="background: linear-gradient(135deg, var(--pink-50), var(--bg-card));">
+    <div style="display: flex; align-items: center; gap: 24px; padding: 20px;">
+        <div style="min-width: 120px;">
+            <svg width="120" height="100" viewBox="0 0 120 100">
+                <rect x="10" y="20" width="40" height="50" rx="4" fill="var(--pink-200)" stroke="var(--pink-400)" stroke-width="2"/>
+                <text x="30" y="50" text-anchor="middle" font-size="16" fill="var(--pink-600)">DOC</text>
+                <path d="M55 45 L65 45" stroke="var(--pink-400)" stroke-width="2" stroke-dasharray="4 2"/>
+                <rect x="70" y="20" width="40" height="50" rx="4" fill="#D1FAE5" stroke="#4ADE80" stroke-width="2"/>
+                <text x="90" y="45" text-anchor="middle" font-size="12" fill="#059669"><tspan x="90" dy="0">ENC</tspan></text>
+                <circle cx="90" cy="55" r="8" fill="#4ADE80"/>
+                <path d="M86 55 L89 58 L94 52" stroke="white" stroke-width="2" fill="none"/>
+            </svg>
+        </div>
+        <div>
+            <h4 style="margin-bottom: 8px;">How Encryption Works</h4>
+            <p style="color: var(--text-secondary); line-height: 1.6;">
+                1. Your file is encrypted using AES-256 encryption<br>
+                2. The AES key is encrypted with your RSA public key using PKCS1_OAEP<br>
+                3. Only you (or authorized DB managers) can decrypt the file with the private key
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-folder"></i> My Encrypted Files ({{ files|length }})</h3>
+    </div>
+    {% if files %}
+    <div class="file-grid">
+        {% for file in files %}
+        <div class="file-card">
+            <div class="file-icon">
+                <i class="fas fa-lock"></i>
+            </div>
+            <div class="file-name">{{ file.original_filename }}</div>
+            <div class="file-meta">
+                <span class="encryption-indicator encrypted">
+                    <i class="fas fa-lock"></i> Encrypted
+                </span>
+                <div style="margin-top: 8px;">Size: {{ (file.file_size / 1024)|round(2) }} KB</div>
+                <div>Cloud: {{ file.cloud_status or 'N/A' }}</div>
+                <div>Chain: {{ file.blockchain_status or 'N/A' }}</div>
+            </div>
+            <div class="action-buttons" style="margin-top: 12px;">
+                <a href="{{ url_for('user.download_encrypted', file_id=file.doc_id) }}" class="btn btn-secondary btn-sm">
+                    <i class="fas fa-download"></i> Download
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-folder-open"></i>
+        <h3>No Files Yet</h3>
+        <p>Upload your first file to encrypt it.</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function updateFileName(input) {
+    if (input.files.length > 0) {
+        document.getElementById('fileName').textContent = 'Selected: ' + input.files[0].name;
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,134 @@
+{% extends "dashboard_base.html" %}
+
+{% block title %}Fee Payment - CloudDB Secure{% endblock %}
+
+{% block sidebar %}
+<li><a href="{{ url_for('user.dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+<li><a href="{{ url_for('user.fee_payment') }}" class="active"><i class="fas fa-credit-card"></i> Fee Payment</a></li>
+<li><a href="{{ url_for('user.complaints') }}"><i class="fas fa-comment-dots"></i> Complaints</a></li>
+<li><a href="{{ url_for('user.file_upload') }}"><i class="fas fa-upload"></i> Upload & Encrypt</a></li>
+<li><a href="{{ url_for('user.file_download') }}"><i class="fas fa-download"></i> Download Files</a></li>
+<li><a href="{{ url_for('user.service_history') }}"><i class="fas fa-history"></i> Service History</a></li>
+<li><a href="{{ url_for('user.secrets') }}"><i class="fas fa-key"></i> Secret Sharing</a></li>
+{% endblock %}
+
+{% block main %}
+<div class="page-header">
+    <h1 class="page-title"><i class="fas fa-credit-card"></i> Fee Payment Portal</h1>
+    <p class="page-subtitle">Pay your maintenance fees securely</p>
+</div>
+
+<div class="grid-2">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-money-bill-wave"></i> Available Fees</h3>
+        </div>
+        {% if fees %}
+            {% for fee in fees %}
+            <div style="padding: 20px; border-bottom: 1px solid var(--pink-100);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-weight: 600; font-size: 1.1rem;">{{ fee.name }}</div>
+                        <div style="color: var(--text-secondary); font-size: 0.9rem;">{{ fee.description or 'Cloud database maintenance fee' }}</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px;">
+                            <i class="fas fa-calendar"></i> Due: {{ fee.due_date or 'No deadline' }}
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div class="fee-amount" style="font-size: 1.75rem; font-weight: 700; color: var(--pink-500);">
+                            {% if currency_display == 'usd' %}
+                                $<span class="amount-usd">{{ "%.2f"|format(fee.amount) }}</span>
+                            {% elif currency_display == 'inr' %}
+                                ₹<span class="amount-inr">{{ "%.2f"|format(fee.amount|to_inr) }}</span>
+                            {% else %}
+                                $<span class="amount-usd">{{ "%.2f"|format(fee.amount) }}</span> &nbsp; / &nbsp; ₹<span class="amount-inr">{{ "%.2f"|format(fee.amount|to_inr) }}</span>
+                            {% endif %}
+                        </div>
+                        <form method="POST" action="{{ url_for('user.pay_fee', fee_id=fee.doc_id) }}" style="margin-top: 8px;">
+                            <div style="display:flex; gap:8px; align-items:center;">
+                                <input type="text" name="algorand_txid" placeholder="Optional Algorand tx id" style="padding:6px; font-size:0.85rem;" />
+                                <select name="pay_currency" style="padding:6px; font-size:0.85rem;">
+                                    <option value="usd" {% if currency_display == 'usd' %}selected{% endif %}>Pay in USD</option>
+                                    <option value="inr" {% if currency_display == 'inr' %}selected{% endif %}>Pay in INR</option>
+                                </select>
+                                <button type="submit" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-check"></i> Pay Now
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-money-bill-wave"></i>
+            <h3>No Fees Due</h3>
+            <p>You have no pending maintenance fees.</p>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-history"></i> Payment History</h3>
+        </div>
+        {% if payments %}
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Fee</th>
+                        <th>Amount</th>
+                        <th>Date</th>
+                        <th>Algorand TX</th>
+                        <th>Chain Status</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payment in payments %}
+                    <tr>
+                        <td>{{ payment.fee_name }}</td>
+                        <td style="font-weight: 600;">
+                            {% if currency_display == 'usd' %}
+                                ${{ "%.2f"|format(payment.amount) }}
+                            {% elif currency_display == 'inr' %}
+                                ₹{{ "%.2f"|format(payment.amount|to_inr) }}
+                            {% else %}
+                                ${{ "%.2f"|format(payment.amount) }} &nbsp; / &nbsp; ₹{{ "%.2f"|format(payment.amount|to_inr) }}
+                            {% endif %}
+                        </td>
+                        <td>{{ payment.created_at[:10] if payment.created_at else 'N/A' }}</td>
+                        <td>{{ payment.get('algorand_tx_id') or '-' }}</td>
+                        <td>{{ payment.get('algorand_status') or '-' }}</td>
+                        <td>
+                            <span class="status-badge status-completed">
+                                <i class="fas fa-check-circle"></i> {{ payment.status }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-receipt"></i>
+            <h3>No Payments Yet</h3>
+            <p>Your payment history will appear here.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+<script>
+    // Enhance: when user changes pay currency, update visual amounts per row (client-side help)
+    (function(){
+        function getRate(){
+            // simple heuristic: parse inr and usd spans already present
+            return null; // server-side handles authoritative conversion
+        }
+        // No-op for now; visual conversion is handled by server values and global toggle
+    })();
+</script>

@@ -1,0 +1,55 @@
+{% extends "dashboard_base.html" %}
+
+{% block title %}Invoice - CloudDB Secure{% endblock %}
+
+{% block main %}
+<div class="page-header">
+    <h1 class="page-title">Invoice</h1>
+    <p class="page-subtitle">Use the QR or the Algorand URI to pay, then copy the invoice id into the tx note before sending.</p>
+</div>
+
+<div class="card" style="max-width:640px;">
+    <div class="card-header">
+        <h3 class="card-title">Invoice {{ payment.invoice_id }}</h3>
+    </div>
+    <div style="padding:16px; color:var(--text-primary);">
+        <p style="margin-bottom:10px;"><strong>Fee:</strong> {{ payment.fee_name }}</p>
+        <p style="margin-bottom:10px;"><strong>Amount Due:</strong></p>
+        <div style="margin-left:20px; padding:12px; background:rgba(15, 31, 67, 0.82); border-left:3px solid #38bdf8; border-radius:8px; color:var(--text-primary);">
+            {% if currency_display == 'usd' %}
+                <p style="margin:4px 0; color:var(--text-primary);"><strong>USD:</strong> ${{ "%.2f"|format(payment.amount) }}</p>
+            {% elif currency_display == 'inr' %}
+                <p style="margin:4px 0; color:var(--text-primary);"><strong>INR:</strong> ₹{{ "%.2f"|format(payment.amount|to_inr) }}</p>
+            {% else %}
+                <p style="margin:4px 0; color:var(--text-primary);"><strong>USD:</strong> ${{ "%.2f"|format(payment.amount) }}</p>
+                <p style="margin:4px 0; color:var(--text-primary);"><strong>INR:</strong> ₹{{ "%.2f"|format(payment.amount|to_inr) }}</p>
+            {% endif %}
+            <p style="margin:4px 0; color:var(--text-primary);"><strong>ALGO:</strong> {{ "%.6f"|format(payment.algo_amount) }} ALGO</p>
+        </div>
+        {% if uri %}
+        <p style="margin-top:16px; margin-bottom:8px;"><strong>Algorand URI:</strong></p>
+        <code style="display:block; padding:10px; background:rgba(14, 28, 61, 0.9); border:1px solid rgba(72, 117, 191, 0.45); border-radius:8px; word-break:break-all; font-size:12px; color:var(--text-primary);">{{ uri }}</code>
+        <p style="margin-top:12px; margin-bottom:6px;"><strong>Invoice Note (paste in wallet note field):</strong></p>
+        <code style="display:block; padding:10px; background:rgba(14, 28, 61, 0.9); border:1px solid rgba(72, 117, 191, 0.45); border-radius:8px; word-break:break-all; font-size:12px; color:var(--text-primary);">{{ payment.invoice_id }}</code>
+        {% endif %}
+        {% if qr_url %}
+        <div style="text-align:center; margin-top:16px;">
+            <h4>QR Code</h4>
+            <img src="{{ qr_url }}" alt="Invoice QR" style="max-width:320px; border:1px solid #ddd; padding:8px; background:#fff;" />
+        </div>
+        {% else %}
+            {% if uri %}
+            <p style="color:var(--text-secondary); margin-top:16px;">QR unavailable. Use the Algorand URI: <code>{{ uri }}</code></p>
+            {% else %}
+            <p style="color:#b00020; margin-top:16px;">QR is unavailable because the receiver wallet address is not configured correctly. Please contact admin.</p>
+            {% endif %}
+        {% endif %}
+        <div style="margin-top:16px; padding:12px; background:#e3f2fd; border-radius:4px;">
+            <p style="margin:0; font-size:13px; color:#0b1733;"><strong>ℹ️ Instructions:</strong> Scan the QR code or copy the URI to your Algorand wallet. The amount and invoice ID will be pre-filled.</p>
+        </div>
+        <div style="margin-top:16px;">
+            <a href="{{ url_for('user.fee_payment') }}" class="btn btn-secondary btn-sm">Back to Fees</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

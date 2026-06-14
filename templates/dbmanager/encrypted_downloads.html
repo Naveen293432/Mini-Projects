@@ -1,0 +1,96 @@
+{% extends "dashboard_base.html" %}
+
+{% block title %}Encrypted Downloads - CloudDB Secure{% endblock %}
+
+{% block sidebar %}
+<li><a href="{{ url_for('dbmanager.dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+<li><a href="{{ url_for('dbmanager.db_monitoring') }}"><i class="fas fa-server"></i> DB Monitoring</a></li>
+<li><a href="{{ url_for('dbmanager.file_management') }}"><i class="fas fa-folder-open"></i> File Management</a></li>
+<li><a href="{{ url_for('dbmanager.encrypted_downloads') }}" class="active"><i class="fas fa-lock"></i> Encrypted Downloads</a></li>
+<li><a href="{{ url_for('dbmanager.maintenance_scheduling') }}"><i class="fas fa-calendar-alt"></i> Maintenance</a></li>
+<li><a href="{{ url_for('dbmanager.performance_analytics') }}"><i class="fas fa-chart-line"></i> Analytics</a></li>
+<li><a href="{{ url_for('dbmanager.secrets') }}"><i class="fas fa-key"></i> Secret Sharing</a></li>
+{% endblock %}
+
+{% block main %}
+<div class="page-header">
+    <h1 class="page-title"><i class="fas fa-lock"></i> Encrypted File Downloads</h1>
+    <p class="page-subtitle">Download encrypted files with decrypt option</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">
+            <i class="fas fa-shield-alt"></i> 
+            Encrypted Files ({{ files|length }})
+        </h3>
+    </div>
+    
+    {% if files %}
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>File Name</th>
+                    <th>Owner</th>
+                    <th>Size</th>
+                    <th>Uploaded</th>
+                    <th>Download Options</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for file in files %}
+                <tr>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="width: 36px; height: 36px; background: #D1FAE5; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-lock" style="color: #059669;"></i>
+                            </div>
+                            <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.9rem;">{{ file.original_filename }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="role-badge {{ file.owner_role }}">{{ file.owner_role }}</span>
+                    </td>
+                    <td>{{ (file.file_size / 1024)|round(2) }} KB</td>
+                    <td>{{ file.created_at[:10] if file.created_at else 'N/A' }}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <a href="{{ url_for('dbmanager.download_encrypted', file_id=file.doc_id) }}" class="btn btn-secondary btn-sm">
+                                <i class="fas fa-lock"></i> Download Encrypted
+                            </a>
+                            <a href="{{ url_for('dbmanager.download_decrypted', file_id=file.doc_id) }}" class="btn btn-success btn-sm">
+                                <i class="fas fa-unlock"></i> Decrypt & Download
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-lock"></i>
+        <h3>No Encrypted Files</h3>
+        <p>No encrypted files available for download.</p>
+    </div>
+    {% endif %}
+</div>
+
+<div class="card" style="background: linear-gradient(135deg, var(--pink-50), var(--bg-card));">
+    <div style="display: flex; align-items: center; gap: 20px; padding: 20px;">
+        <div style="width: 80px; height: 80px; background: var(--pink-100); border-radius: 16px; display: flex; align-items: center; justify-content: center;">
+            <i class="fas fa-info-circle" style="font-size: 2rem; color: var(--pink-500);"></i>
+        </div>
+        <div>
+            <h4 style="margin-bottom: 8px;">How Encryption Works</h4>
+            <p style="color: var(--text-secondary); line-height: 1.6;">
+                Files are encrypted using PKCS1_OAEP with hybrid RSA-AES encryption. 
+                Download encrypted to get the raw encrypted file, or decrypt & download to get the original file.
+                Only users with the correct private key can decrypt files.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

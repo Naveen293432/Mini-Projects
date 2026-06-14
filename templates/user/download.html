@@ -1,0 +1,131 @@
+{% extends "dashboard_base.html" %}
+
+{% block title %}File Downloads - CloudDB Secure{% endblock %}
+
+{% block sidebar %}
+<li><a href="{{ url_for('user.dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+<li><a href="{{ url_for('user.fee_payment') }}"><i class="fas fa-credit-card"></i> Fee Payment</a></li>
+<li><a href="{{ url_for('user.complaints') }}"><i class="fas fa-comment-dots"></i> Complaints</a></li>
+<li><a href="{{ url_for('user.file_upload') }}"><i class="fas fa-upload"></i> Upload & Encrypt</a></li>
+<li><a href="{{ url_for('user.file_download') }}" class="active"><i class="fas fa-download"></i> Download Files</a></li>
+<li><a href="{{ url_for('user.service_history') }}"><i class="fas fa-history"></i> Service History</a></li>
+<li><a href="{{ url_for('user.secrets') }}"><i class="fas fa-key"></i> Secret Sharing</a></li>
+{% endblock %}
+
+{% block main %}
+<div class="page-header">
+    <h1 class="page-title"><i class="fas fa-download"></i> Encrypted File Download</h1>
+    <p class="page-subtitle">Download your encrypted files or decrypt them</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-user-lock"></i> My Files ({{ my_files|length }})</h3>
+    </div>
+    {% if my_files %}
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>File Name</th>
+                    <th>Status</th>
+                    <th>Size</th>
+                    <th>Uploaded</th>
+                    <th>Download Options</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for file in my_files %}
+                <tr>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="width: 36px; height: 36px; background: #D1FAE5; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-lock" style="color: #059669;"></i>
+                            </div>
+                            <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.9rem;">{{ file.original_filename }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="encryption-indicator {% if file.encrypted %}encrypted{% else %}decrypted{% endif %}">
+                            <i class="fas fa-{% if file.encrypted %}lock{% else %}unlock{% endif %}"></i>
+                            {% if file.encrypted %}Encrypted{% else %}Plain{% endif %}
+                        </span>
+                    </td>
+                    <td>{{ (file.file_size / 1024)|round(2) }} KB</td>
+                    <td>{{ file.created_at[:10] if file.created_at else 'N/A' }}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <a href="{{ url_for('user.download_encrypted', file_id=file.doc_id) }}" class="btn btn-secondary btn-sm">
+                                <i class="fas fa-lock"></i> Encrypted
+                            </a>
+                            {% if file.encrypted %}
+                            <a href="{{ url_for('user.download_decrypted', file_id=file.doc_id) }}" class="btn btn-success btn-sm">
+                                <i class="fas fa-unlock"></i> Decrypted
+                            </a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-folder-open"></i>
+        <h3>No Files Yet</h3>
+        <p>Upload files to see them here.</p>
+    </div>
+    {% endif %}
+</div>
+
+{% if shared_files %}
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-share-alt"></i> Files from Database Management</h3>
+    </div>
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>File Name</th>
+                    <th>Status</th>
+                    <th>Size</th>
+                    <th>Uploaded</th>
+                    <th>Download Options</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for file in shared_files %}
+                <tr>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="width: 36px; height: 36px; background: #DBEAFE; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-database" style="color: #3B82F6;"></i>
+                            </div>
+                            <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.9rem;">{{ file.original_filename }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="encryption-indicator {% if file.encrypted %}encrypted{% else %}decrypted{% endif %}">
+                            <i class="fas fa-{% if file.encrypted %}lock{% else %}unlock{% endif %}"></i>
+                            {% if file.encrypted %}Encrypted{% else %}Plain{% endif %}
+                        </span>
+                    </td>
+                    <td>{{ (file.file_size / 1024)|round(2) }} KB</td>
+                    <td>{{ file.created_at[:10] if file.created_at else 'N/A' }}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <a href="{{ url_for('user.download_encrypted', file_id=file.doc_id) }}" class="btn btn-secondary btn-sm">
+                                <i class="fas fa-download"></i> Download
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

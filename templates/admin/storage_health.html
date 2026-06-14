@@ -1,0 +1,202 @@
+{% extends "dashboard_base.html" %}
+
+{% block title %}Storage Health - Admin{% endblock %}
+
+{% block sidebar %}
+<li><a href="{{ url_for('admin.dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+<li><a href="{{ url_for('admin.user_management') }}"><i class="fas fa-users"></i> User Management</a></li>
+<li><a href="{{ url_for('admin.fee_configuration') }}"><i class="fas fa-money-bill-wave"></i> Fee Configuration</a></li>
+<li><a href="{{ url_for('admin.complaint_review') }}"><i class="fas fa-comment-dots"></i> Complaint Review</a></li>
+<li><a href="{{ url_for('admin.system_reports') }}"><i class="fas fa-chart-bar"></i> System Reports</a></li>
+<li><a href="{{ url_for('admin.audit_logs') }}"><i class="fas fa-history"></i> Audit Logs</a></li>
+<li><a href="{{ url_for('admin.secrets') }}"><i class="fas fa-key"></i> Secret Sharing</a></li>
+<li><a href="{{ url_for('admin.chain_view') }}"><i class="fas fa-link"></i> Algorand Ledger</a></li>
+<li><a href="{{ url_for('admin.chain_config') }}"><i class="fas fa-heartbeat"></i> Chain Config Health</a></li>
+<li><a href="{{ url_for('admin.storage_health') }}" class="active"><i class="fas fa-database"></i> Storage Health</a></li>
+{% endblock %}
+
+{% block main %}
+<div class="page-header">
+    <h1 class="page-title"><i class="fas fa-database"></i> Runtime Storage Health</h1>
+    <p class="page-subtitle">Database path, upload roots, cloud provider, and file sync status.</p>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon"><i class="fas fa-file"></i></div>
+        <div class="stat-content">
+            <h3>{{ total_files }}</h3>
+            <p>Total File Records</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background:#FEF2F2;"><i class="fas fa-cloud" style="color:#B91C1C;"></i></div>
+        <div class="stat-content">
+            <h3>{{ cloud_failed_count }}</h3>
+            <p>Cloud Sync Failures</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background:#FFF7ED;"><i class="fas fa-link" style="color:#C2410C;"></i></div>
+        <div class="stat-content">
+            <h3>{{ chain_failed_count }}</h3>
+            <p>Blockchain Anchor Failures</p>
+        </div>
+    </div>
+</div>
+
+<div class="card" style="max-width: 980px;">
+    <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-cogs"></i> Runtime Paths</h3>
+    </div>
+    <div style="padding:16px;">
+        <p><strong>Database file:</strong></p>
+        <span class="path-pill">{{ db_path }}</span>
+        <p style="margin-top:8px;">
+            {% if db_exists %}
+            <span style="color:#0f7b0f;">Database file exists</span>
+            {% else %}
+            <span style="color:#b00020;">Database file missing</span>
+            {% endif %}
+        </p>
+
+        <p style="margin-top:14px;"><strong>Uploads root:</strong></p>
+        <span class="path-pill">{{ upload_root }}</span>
+
+        <p style="margin-top:14px;"><strong>Cloud provider:</strong> {{ cloud_provider }}</p>
+        <p><strong>Local cloud root:</strong></p>
+        <span class="path-pill">{{ cloud_root }}</span>
+
+        <p style="margin-top:14px;"><strong>File retry worker:</strong>
+            {% if retry_worker_enabled %}
+            <span style="color:#0f7b0f;">Enabled</span>
+            {% else %}
+            <span style="color:#b00020;">Disabled</span>
+            {% endif %}
+        </p>
+
+        <div style="margin-top:16px;">
+            <form method="POST" action="{{ url_for('admin.storage_retry_now') }}" style="display:inline-block; margin-right: 8px;">
+                <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-rotate"></i> Retry Failed Sync Now</button>
+            </form>
+            <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary btn-sm">Back to Dashboard</a>
+        </div>
+    </div>
+</div>
+
+<div class="grid-2" style="margin-top: 24px;">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-database"></i> Database File Records</h3>
+        </div>
+        <div class="data-table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Original Name</th>
+                        <th>Encrypted</th>
+                        <th>Cloud</th>
+                        <th>Blockchain</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for file in file_records %}
+                    <tr>
+                        <td>{{ file.original_filename }}</td>
+                        <td>{{ 'Yes' if file.encrypted else 'No' }}</td>
+                        <td>{{ file.cloud_status or 'N/A' }}</td>
+                        <td>{{ file.blockchain_status or 'N/A' }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" style="color: var(--text-secondary);">No file records found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-cloud"></i> Local Cloud Objects</h3>
+        </div>
+        <div class="data-table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Key</th>
+                        <th>Size</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in cloud_objects %}
+                    <tr>
+                        <td style="word-break: break-all;">{{ item.key }}</td>
+                        <td>{{ item.size }} bytes</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="2" style="color: var(--text-secondary);">No local cloud objects found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="grid-2" style="margin-top: 24px;">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-lock"></i> Encryption Output</h3>
+        </div>
+        <div style="padding: 16px; color: var(--text-secondary); line-height: 1.8;">
+            Encrypted uploads are stored under the app's upload folders and tracked in the database records above.
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-link"></i> Blockchain Output</h3>
+        </div>
+        <div style="padding: 16px; color: var(--text-secondary); line-height: 1.8;">
+            Blockchain anchors are shown below as actual transaction rows.
+        </div>
+    </div>
+</div>
+
+<div class="card" style="margin-top: 24px;">
+    <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-link"></i> Blockchain Transaction Records</h3>
+    </div>
+    <div class="data-table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>File</th>
+                    <th>Tx ID</th>
+                    <th>Status</th>
+                    <th>Reference</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for file in blockchain_records %}
+                <tr>
+                    <td>{{ file.original_filename }}</td>
+                    <td style="word-break: break-all;">{{ file.blockchain_tx_id or 'N/A' }}</td>
+                    <td>{{ file.blockchain_status or 'N/A' }}</td>
+                    <td style="word-break: break-all;">{{ file.filename }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" style="color: var(--text-secondary);">
+                        No blockchain transaction records found yet. Anchored files will appear here after Algorand submission runs.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

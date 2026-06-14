@@ -1,0 +1,133 @@
+{% extends "dashboard_base.html" %}
+
+{% block title %}Algorand Ledger - Admin{% endblock %}
+
+{% block main %}
+<div class="page-header">
+    <h1 class="page-title">Algorand Transactions</h1>
+    <p class="page-subtitle">View and verify Algorand tx ids submitted by users.</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Payments with Algorand Metadata</h3>
+        <div style="float:right; display:flex; gap:8px;">
+        <a href="{{ url_for('admin.chain_config') }}" class="btn btn-secondary btn-sm">Config Health</a>
+        <form method="GET" action="{{ url_for('admin.chain_export') }}" style="display:flex; gap:8px;">
+            <input type="hidden" name="q" value="{{ q or '' }}" />
+            <input type="hidden" name="status" value="{{ status or '' }}" />
+            <button type="submit" class="btn btn-secondary btn-sm">Export CSV</button>
+        </form>
+        </div>
+    </div>
+    <div style="padding:12px 16px;">
+        <form method="GET" action="" style="display:flex; gap:8px; align-items:center;">
+            <input type="text" name="q" placeholder="Search user, fee, txid" value="{{ q or '' }}" />
+            <select name="status">
+                <option value="">Any status</option>
+                <option value="Pending" {% if status == 'Pending' %}selected{% endif %}>Pending</option>
+                <option value="Confirmed" {% if status == 'Confirmed' %}selected{% endif %}>Confirmed</option>
+                <option value="Server-Sent" {% if status == 'Server-Sent' %}selected{% endif %}>Server-Sent</option>
+            </select>
+            <button class="btn btn-primary btn-sm">Filter</button>
+        </form>
+    </div>
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>User</th>
+                    <th>Fee</th>
+                    <th>Amount</th>
+                    <th>Alg Tx</th>
+                    <th>Chain Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in payments %}
+                <tr>
+                    <td>{{ p.doc_id }}</td>
+                    <td>{{ p.user_name }}</td>
+                    <td>{{ p.fee_name }}</td>
+                    <td>
+                        {% if currency_display == 'usd' %}
+                            ${{ "%.2f"|format(p.amount) }}
+                        {% elif currency_display == 'inr' %}
+                            ₹{{ "%.2f"|format(p.amount|to_inr) }}
+                        {% else %}
+                            ${{ "%.2f"|format(p.amount) }} &nbsp; / &nbsp; ₹{{ "%.2f"|format(p.amount|to_inr) }}
+                        {% endif %}
+                    </td>
+                    <td>{{ p.get('algorand_tx_id') or '-' }}</td>
+                    <td>{{ p.get('algorand_status') or '-' }}</td>
+                    <td>
+                        {% if p.get('algorand_tx_id') %}
+                        <form method="POST" action="{{ url_for('admin.chain_verify', payment_id=p.doc_id) }}" style="display:inline;">
+                            <button type="submit" class="btn btn-sm btn-primary">Verify</button>
+                        </form>
+                        <a href="https://testnet.algoexplorer.io/tx/{{ p.get('algorand_tx_id') }}" target="_blank" class="btn btn-sm btn-secondary">Explorer</a>
+                        {% else %}
+                            <form method="POST" action="{{ url_for('admin.chain_send', payment_id=p.doc_id) }}" style="display:inline;">
+                                <input type="text" name="to_address" placeholder="Destination address" style="width:220px;" required />
+                                <button type="submit" class="btn btn-sm btn-warning">Send</button>
+                            </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if pagination %}
+    <div style="padding:12px 16px;">
+        <div>Page {{ pagination.page }} of {{ pagination.pages }} — {{ pagination.total }} results</div>
+        <div style="margin-top:8px;">
+            {% if pagination.page > 1 %}
+            <a href="?page={{ pagination.page -1 }}&per_page={{ pagination.per_page }}&q={{ q or '' }}&status={{ status or '' }}" class="btn btn-sm">Prev</a>
+            {% endif %}
+            {% if pagination.page < pagination.pages %}
+            <a href="?page={{ pagination.page +1 }}&per_page={{ pagination.per_page }}&q={{ q or '' }}&status={{ status or '' }}" class="btn btn-sm">Next</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<div class="card" style="margin-top: 24px;">
+    <div class="card-header">
+        <h3 class="card-title">Blockchain Transaction Records</h3>
+    </div>
+    <div class="data-table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>User</th>
+                    <th>Tx ID</th>
+                    <th>Status</th>
+                    <th>Fee</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in blockchain_records %}
+                <tr>
+                    <td>{{ p.doc_id }}</td>
+                    <td>{{ p.user_name }}</td>
+                    <td style="word-break: break-all;">{{ p.get('algorand_tx_id') or '-' }}</td>
+                    <td>{{ p.get('algorand_status') or '-' }}</td>
+                    <td>{{ p.fee_name }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" style="color: var(--text-secondary);">
+                        No blockchain transaction records found yet. Submitted payments will appear here once a tx id is recorded.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

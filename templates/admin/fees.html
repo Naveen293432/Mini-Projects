@@ -1,0 +1,123 @@
+{% extends "dashboard_base.html" %}
+
+{% block title %}Fee Configuration - CloudDB Secure{% endblock %}
+
+{% block sidebar %}
+<li><a href="{{ url_for('admin.dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+<li><a href="{{ url_for('admin.user_management') }}"><i class="fas fa-users"></i> User Management</a></li>
+<li><a href="{{ url_for('admin.fee_configuration') }}" class="active"><i class="fas fa-money-bill-wave"></i> Fee Configuration</a></li>
+<li><a href="{{ url_for('admin.complaint_review') }}"><i class="fas fa-comment-dots"></i> Complaint Review</a></li>
+<li><a href="{{ url_for('admin.system_reports') }}"><i class="fas fa-chart-bar"></i> System Reports</a></li>
+<li><a href="{{ url_for('admin.audit_logs') }}"><i class="fas fa-history"></i> Audit Logs</a></li>
+<li><a href="{{ url_for('admin.secrets') }}"><i class="fas fa-key"></i> Secret Sharing</a></li>
+{% endblock %}
+
+{% block main %}
+<div class="page-header">
+    <h1 class="page-title"><i class="fas fa-money-bill-wave"></i> Fee Configuration</h1>
+    <p class="page-subtitle">Configure and manage maintenance fees</p>
+</div>
+
+<div class="grid-2">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-plus-circle"></i> Create New Fee</h3>
+        </div>
+        <form method="POST" action="{{ url_for('admin.create_fee_route') }}">
+            <div class="form-group">
+                <label class="form-label" for="name">Fee Name</label>
+                <input type="text" id="name" name="name" class="form-control" required placeholder="e.g., Monthly Maintenance">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="amount">Amount ($)</label>
+                <input type="number" id="amount" name="amount" class="form-control" required step="0.01" min="0" placeholder="0.00">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="description">Description</label>
+                <textarea id="description" name="description" class="form-control" placeholder="Fee description"></textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="due_date">Due Date</label>
+                <input type="date" id="due_date" name="due_date" class="form-control">
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Create Fee
+            </button>
+        </form>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-list"></i> Active Fees</h3>
+        </div>
+        {% if fees %}
+            {% for fee in fees %}
+            <div style="padding: 16px; border-bottom: 1px solid var(--pink-100); display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-weight: 600;">{{ fee.name }}</div>
+                    <div style="font-size: 0.9rem; color: var(--text-secondary);">{{ fee.description or 'No description' }}</div>
+                    <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px;">
+                        Due: {{ fee.due_date or 'No deadline' }}
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--pink-500);">
+                        {% if currency_display == 'usd' %}
+                            ${{ "%.2f"|format(fee.amount) }}
+                        {% elif currency_display == 'inr' %}
+                            ₹{{ "%.2f"|format(fee.amount|to_inr) }}
+                        {% else %}
+                            ${{ "%.2f"|format(fee.amount) }} &nbsp; / &nbsp; ₹{{ "%.2f"|format(fee.amount|to_inr) }}
+                        {% endif %}
+                    </div>
+                    <div class="action-buttons" style="margin-top: 8px;">
+                        <button class="btn btn-secondary btn-sm modal-trigger" data-modal="editFee{{ fee.doc_id }}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <form method="POST" action="{{ url_for('admin.delete_fee_route', fee_id=fee.doc_id) }}" style="display: inline;">
+                            <button type="submit" class="btn btn-danger btn-sm">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="editFee{{ fee.doc_id }}" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Edit Fee</h3>
+                        <button class="modal-close">&times;</button>
+                    </div>
+                    <form method="POST" action="{{ url_for('admin.edit_fee', fee_id=fee.doc_id) }}">
+                        <div class="form-group">
+                            <label class="form-label">Fee Name</label>
+                            <input type="text" name="name" class="form-control" value="{{ fee.name }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Amount ($)</label>
+                            <input type="number" name="amount" class="form-control" value="{{ fee.amount }}" required step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Description</label>
+                            <textarea name="description" class="form-control">{{ fee.description }}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Due Date</label>
+                            <input type="date" name="due_date" class="form-control" value="{{ fee.due_date }}">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-money-bill-wave"></i>
+            <h3>No Fees Created</h3>
+            <p>Create your first maintenance fee.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,207 @@
+{% extends "dashboard_base.html" %}
+
+{% block title %}User Dashboard - CloudDB Secure{% endblock %}
+
+{% block sidebar %}
+<li><a href="{{ url_for('user.dashboard') }}" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+<li><a href="{{ url_for('user.fee_payment') }}"><i class="fas fa-credit-card"></i> Fee Payment</a></li>
+<li><a href="{{ url_for('user.complaints') }}"><i class="fas fa-comment-dots"></i> Complaints</a></li>
+<li><a href="{{ url_for('user.file_upload') }}"><i class="fas fa-upload"></i> Upload & Encrypt</a></li>
+<li><a href="{{ url_for('user.file_download') }}"><i class="fas fa-download"></i> Download Files</a></li>
+<li><a href="{{ url_for('user.service_history') }}"><i class="fas fa-history"></i> Service History</a></li>
+<li><a href="{{ url_for('user.secrets') }}"><i class="fas fa-key"></i> Secret Sharing</a></li>
+{% endblock %}
+
+{% block main %}
+<div class="page-header">
+    <h1 class="page-title"><i class="fas fa-user"></i> User Dashboard</h1>
+    <p class="page-subtitle">Welcome back, {{ current_user.username }}!</p>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-receipt"></i>
+        </div>
+        <div class="stat-content">
+            <h3>{{ stats.total_payments }}</h3>
+            <p>Total Payments</p>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon" style="background: #D1FAE5;">
+            <i class="fas fa-dollar-sign" style="color: #059669;"></i>
+        </div>
+        <div class="stat-content">
+            <h3>
+                {% if currency_display == 'usd' %}
+                    ${{ "%.2f"|format(stats.total_spent) }}
+                {% elif currency_display == 'inr' %}
+                    ₹{{ "%.2f"|format(stats.total_spent|to_inr) }}
+                {% else %}
+                    ${{ "%.2f"|format(stats.total_spent) }} &nbsp; / &nbsp; ₹{{ "%.2f"|format(stats.total_spent|to_inr) }}
+                {% endif %}
+            </h3>
+            <p>Total Spent</p>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon" style="background: #FEF3C7;">
+            <i class="fas fa-comment-dots" style="color: #D97706;"></i>
+        </div>
+        <div class="stat-content">
+            <h3>{{ stats.active_complaints }}</h3>
+            <p>Active Complaints</p>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon" style="background: #DBEAFE;">
+            <i class="fas fa-file-alt" style="color: #2563EB;"></i>
+        </div>
+        <div class="stat-content">
+            <h3>{{ stats.total_files }}</h3>
+            <p>My Files</p>
+        </div>
+    </div>
+</div>
+
+<div class="grid-2">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-lock"></i> Your Encryption Key</h3>
+        </div>
+        <div style="text-align: center; padding: 30px;">
+            <div style="width: 100px; height: 100px; background: linear-gradient(135deg, #4ADE80, #22C55E); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                <i class="fas fa-key" style="font-size: 2.5rem; color: white;"></i>
+            </div>
+            <h4 style="color: #059669; margin-bottom: 8px;">Keys Generated</h4>
+            <p style="color: var(--text-secondary);">Your RSA key pair is ready for encryption</p>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-bolt"></i> Quick Actions</h3>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            <a href="{{ url_for('user.file_upload') }}" class="btn btn-primary">
+                <i class="fas fa-upload"></i> Upload & Encrypt File
+            </a>
+            <a href="{{ url_for('user.fee_payment') }}" class="btn btn-secondary">
+                <i class="fas fa-credit-card"></i> Pay Maintenance Fee
+            </a>
+            <a href="{{ url_for('user.complaints') }}" class="btn btn-secondary">
+                <i class="fas fa-plus-circle"></i> Submit Complaint
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="page-header" style="margin-top: 26px;">
+    <h2 class="page-title" style="font-size: 1.5rem;"><i class="fas fa-layer-group"></i> Your File Layers</h2>
+    <p class="page-subtitle">Encryption, database storage, cloud backup, and blockchain are separated here.</p>
+</div>
+
+<div class="grid-2">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-lock"></i> Encryption</h3>
+        </div>
+        <p style="color: var(--text-secondary); line-height: 1.8;">
+            Your uploads are encrypted locally with your RSA key pair before storage.
+        </p>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-database"></i> Database</h3>
+        </div>
+        <p style="color: var(--text-secondary); line-height: 1.8;">
+            Project records are stored in <span class="path-pill" style="display:inline-block; margin-top:8px;">{{ db_path }}</span>.
+        </p>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-cloud"></i> Cloud</h3>
+        </div>
+        <p style="color: var(--text-secondary); line-height: 1.8;">
+            Cloud backup uses <span class="path-pill" style="display:inline-block; margin-top:8px;">{{ cloud_root }}</span> when the local sync path is configured.
+        </p>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-link"></i> Blockchain</h3>
+        </div>
+        <p style="color: var(--text-secondary); line-height: 1.8;">
+            File hashes can be anchored on Algorand to prove file integrity.
+        </p>
+    </div>
+</div>
+
+<div class="grid-2" style="margin-top: 24px;">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-database"></i> File Records</h3>
+        </div>
+        <div style="padding: 16px; overflow-x: auto;">
+            <table style="width:100%; border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th style="text-align:left; padding:8px; border-bottom:1px solid rgba(255,255,255,0.15);">Name</th>
+                        <th style="text-align:left; padding:8px; border-bottom:1px solid rgba(255,255,255,0.15);">Encrypted</th>
+                        <th style="text-align:left; padding:8px; border-bottom:1px solid rgba(255,255,255,0.15);">Cloud</th>
+                        <th style="text-align:left; padding:8px; border-bottom:1px solid rgba(255,255,255,0.15);">Blockchain</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for file in file_records %}
+                    <tr>
+                        <td style="padding:8px; border-bottom:1px solid rgba(255,255,255,0.08);">{{ file.original_filename }}</td>
+                        <td style="padding:8px; border-bottom:1px solid rgba(255,255,255,0.08);">{{ 'Yes' if file.encrypted else 'No' }}</td>
+                        <td style="padding:8px; border-bottom:1px solid rgba(255,255,255,0.08);">{{ file.cloud_status or 'N/A' }}</td>
+                        <td style="padding:8px; border-bottom:1px solid rgba(255,255,255,0.08);">{{ file.blockchain_status or 'N/A' }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" style="padding:8px; color: var(--text-secondary);">No file records found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-cloud"></i> Cloud Objects</h3>
+        </div>
+        <div style="padding: 16px; overflow-x: auto;">
+            <table style="width:100%; border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th style="text-align:left; padding:8px; border-bottom:1px solid rgba(255,255,255,0.15);">Key</th>
+                        <th style="text-align:left; padding:8px; border-bottom:1px solid rgba(255,255,255,0.15);">Size</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in cloud_objects %}
+                    <tr>
+                        <td style="padding:8px; border-bottom:1px solid rgba(255,255,255,0.08); word-break: break-all;">{{ item.key }}</td>
+                        <td style="padding:8px; border-bottom:1px solid rgba(255,255,255,0.08);">{{ item.size }} bytes</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="2" style="padding:8px; color: var(--text-secondary);">No cloud objects found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

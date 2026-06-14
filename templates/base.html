@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Cloud DB Maintenance{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="container navbar-content">
+            <a href="{{ url_for('main.index') }}" class="navbar-brand">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+                </svg>
+                <span>CloudDB Secure</span>
+            </a>
+            <div style="margin-left:16px; display:flex; align-items:center; gap:12px;">
+                <div class="currency-toggle" role="group" aria-label="Currency display"
+                    style="display:flex; background: rgba(255,255,255,0.06); padding:4px; border-radius:8px;">
+                    <button class="currency-btn {% if currency_display == 'usd' %}active{% endif %}"
+                        data-mode="usd">USD</button>
+                    <button class="currency-btn {% if currency_display == 'both' %}active{% endif %}"
+                        data-mode="both">Both</button>
+                    <button class="currency-btn {% if currency_display == 'inr' %}active{% endif %}"
+                        data-mode="inr">INR</button>
+                </div>
+            </div>
+            <ul class="navbar-nav">
+                {% if current_user.is_authenticated %}
+                <li>
+                    <a href="{{ url_for('user.account') }}" title="Account Settings"><i class="fas fa-cog"></i>
+                        Settings</a>
+                </li>
+                <li>
+                    <span class="role-badge {{ current_user.role }}">
+                        <i class="fas fa-user-shield"></i>
+                        {{ current_user.role }}
+                    </span>
+                </li>
+                <li><a href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                {% else %}
+                <li><a href="{{ url_for('auth.login') }}"><i class="fas fa-right-to-bracket"></i> Login Portal</a></li>
+                <li><a href="{{ url_for('auth.signup') }}"><i class="fas fa-user-plus"></i> User Sign Up</a></li>
+                {% endif %}
+            </ul>
+        </div>
+    </nav>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="container" style="padding-top: 20px;">
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">
+            <i
+                class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'error' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+
+    <script>
+        document.querySelectorAll('.modal-trigger').forEach(trigger => {
+            trigger.addEventListener('click', () => {
+                const modalId = trigger.dataset.modal;
+                document.getElementById(modalId).classList.add('active');
+            });
+        });
+
+        document.querySelectorAll('.modal-close').forEach(close => {
+            close.addEventListener('click', () => {
+                close.closest('.modal').classList.remove('active');
+            });
+        });
+
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
+                }
+            });
+        });
+    </script>
+    <script>
+        (function () {
+            function setCookie(name, value, days) {
+                var expires = '';
+                if (days) {
+                    var date = new Date();
+                    date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                    expires = '; expires=' + date.toUTCString();
+                }
+                document.cookie = name + '=' + (value || '') + expires + '; path=/';
+            }
+
+            document.querySelectorAll('.currency-btn').forEach(btn => {
+                btn.addEventListener('click', function (e) {
+                    var mode = this.dataset.mode;
+                    setCookie('currency_display', mode, 30);
+                    // visual feedback
+                    document.querySelectorAll('.currency-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    // reload to apply server-rendered templates
+                    setTimeout(function () { location.reload(); }, 200);
+                });
+            });
+        })();
+    </script>
+</body>
+
+</html>

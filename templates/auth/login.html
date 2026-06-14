@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}{% if login_role %}{{ login_label }} - CloudDB Secure{% else %}Login Portal - CloudDB Secure{% endif
+%}{% endblock %}
+
+{% block content %}
+<div class="auth-shell">
+    <section class="auth-hero-panel">
+        <div class="auth-brand-pill">CloudDB Secure</div>
+        {% if login_role == 'administrator' %}
+        <h1>Analytics-grade access control for secure operations.</h1>
+        <p>Administrator accounts manage users, complaints, fees, and compliance workflows from one control center.</p>
+        {% elif login_role == 'dbmanager' %}
+        <h1>Operational visibility for database management.</h1>
+        <p>Database managers access monitoring, file handling, maintenance, and encrypted downloads through a dedicated
+            portal.</p>
+        {% else %}
+        <h1>Create your secure user workspace.</h1>
+        <p>Users register and wait for admin approval before full access is granted. The portal keeps personal data,
+            payments, and file workflows isolated.</p>
+        {% endif %}
+
+        <div class="auth-feature-list">
+            <div class="auth-feature-item"><i class="fas fa-lock"></i><span>PKCS1_OAEP encryption workflow</span></div>
+            <div class="auth-feature-item"><i class="fas fa-chart-line"></i><span>Real-time dashboard monitoring</span>
+            </div>
+            <div class="auth-feature-item"><i class="fas fa-user-shield"></i><span>Role-based secure control</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="auth-form-panel">
+        {% if login_role %}
+        <div class="auth-form-shell">
+            <div class="auth-form-icon">
+                {% if login_role == 'administrator' %}
+                <i class="fas fa-user-shield"></i>
+                {% elif login_role == 'dbmanager' %}
+                <i class="fas fa-database"></i>
+                {% else %}
+                <i class="fas fa-user-lock"></i>
+                {% endif %}
+            </div>
+            <h2>{{ login_label }}</h2>
+            <p>Sign in with your {{ login_role }} credentials.</p>
+
+            {% if show_role_switcher %}
+            <div class="auth-switcher">
+                <a href="{{ url_for('auth.login', role='user') }}"
+                    class="auth-switcher-chip {% if login_role == 'user' %}active{% endif %}">User</a>
+                <a href="{{ url_for('auth.login', role='administrator') }}"
+                    class="auth-switcher-chip {% if login_role == 'administrator' %}active{% endif %}">Administrator</a>
+                <a href="{{ url_for('auth.login', role='dbmanager') }}"
+                    class="auth-switcher-chip {% if login_role == 'dbmanager' %}active{% endif %}">DB Manager</a>
+            </div>
+            {% endif %}
+
+            {% if login_role == 'user' %}
+            <div class="auth-note">
+                <i class="fas fa-circle-info"></i>
+                User accounts require administrator approval before login is enabled.
+            </div>
+            {% endif %}
+
+            <form method="POST" action="{{ url_for('auth.login', role=login_role) }}">
+                <div class="form-group">
+                    <label class="form-label" for="username"><i class="fas fa-user"></i> Username</label>
+                    <input type="text" id="username" name="username" class="form-control" required
+                        placeholder="Enter your username">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="password"><i class="fas fa-lock"></i> Password</label>
+                    <input type="password" id="password" name="password" class="form-control" required
+                        placeholder="Enter your password">
+                </div>
+
+                <button type="submit" class="btn btn-primary auth-submit-btn">
+                    <i class="fas fa-sign-in-alt"></i> Sign In
+                </button>
+            </form>
+
+            <div class="auth-footer">
+                {% if login_role == 'user' %}
+                <p>Don't have a user account? <a href="{{ url_for('auth.signup') }}">Register here</a></p>
+                {% else %}
+                <p><a href="{{ url_for('auth.login') }}">Back to portal selection</a></p>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <div class="auth-form-shell">
+            <div class="auth-form-icon">
+                <i class="fas fa-user-lock"></i>
+            </div>
+            <h2>Welcome Back</h2>
+            <p>Choose the portal that matches your account.</p>
+
+            <div class="auth-role-grid">
+                <a href="{{ url_for('auth.login', role='user') }}" class="auth-role-card">
+                    <i class="fas fa-user"></i>
+                    <strong>User</strong>
+                    <span>Register, get approved, then sign in</span>
+                </a>
+                <a href="{{ url_for('auth.login', role='administrator') }}" class="auth-role-card">
+                    <i class="fas fa-user-shield"></i>
+                    <strong>Administrator</strong>
+                    <span>Direct staff login</span>
+                </a>
+                <a href="{{ url_for('auth.login', role='dbmanager') }}" class="auth-role-card">
+                    <i class="fas fa-database"></i>
+                    <strong>DB Manager</strong>
+                    <span>Direct staff login</span>
+                </a>
+            </div>
+
+            <div class="auth-footer">
+                <p>Need a user account? <a href="{{ url_for('auth.signup') }}">Register here</a></p>
+            </div>
+        </div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

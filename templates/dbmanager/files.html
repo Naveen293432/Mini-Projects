@@ -1,0 +1,102 @@
+{% extends "dashboard_base.html" %}
+
+{% block title %}File Management - CloudDB Secure{% endblock %}
+
+{% block sidebar %}
+<li><a href="{{ url_for('dbmanager.dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+<li><a href="{{ url_for('dbmanager.db_monitoring') }}"><i class="fas fa-server"></i> DB Monitoring</a></li>
+<li><a href="{{ url_for('dbmanager.file_management') }}" class="active"><i class="fas fa-folder-open"></i> File Management</a></li>
+<li><a href="{{ url_for('dbmanager.encrypted_downloads') }}"><i class="fas fa-lock"></i> Encrypted Downloads</a></li>
+<li><a href="{{ url_for('dbmanager.maintenance_scheduling') }}"><i class="fas fa-calendar-alt"></i> Maintenance</a></li>
+<li><a href="{{ url_for('dbmanager.performance_analytics') }}"><i class="fas fa-chart-line"></i> Analytics</a></li>
+<li><a href="{{ url_for('dbmanager.secrets') }}"><i class="fas fa-key"></i> Secret Sharing</a></li>
+{% endblock %}
+
+{% block main %}
+<div class="page-header">
+    <h1 class="page-title"><i class="fas fa-folder-open"></i> File Management Center</h1>
+    <p class="page-subtitle">Upload, encrypt, and manage files</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-cloud-upload-alt"></i> Upload File</h3>
+    </div>
+    <form method="POST" action="{{ url_for('dbmanager.upload_file') }}" enctype="multipart/form-data">
+        <div class="file-upload-zone" onclick="document.getElementById('fileInput').click();">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <h4>Drop files here or click to upload</h4>
+            <p>Supports all file types. Files will be encrypted with PKCS1_OAEP.</p>
+            <input type="file" id="fileInput" name="file" style="display: none;" required onchange="updateFileName(this)">
+        </div>
+        <div id="fileName" style="margin-top: 12px; text-align: center; font-weight: 600; color: var(--pink-500);"></div>
+        <div class="form-group" style="margin-top: 20px;">
+            <label class="form-label">Encryption Option</label>
+            <select name="encrypt" class="form-control form-select">
+                <option value="yes">Encrypt file (PKCS1_OAEP)</option>
+                <option value="no">Upload without encryption</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-upload"></i> Upload File
+        </button>
+    </form>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-files-o"></i> All Files ({{ files|length }})</h3>
+    </div>
+    
+    {% if files %}
+    <div class="file-grid">
+        {% for file in files %}
+        <div class="file-card">
+            <div class="file-icon">
+                {% if file.encrypted %}
+                <i class="fas fa-lock"></i>
+                {% else %}
+                <i class="fas fa-file"></i>
+                {% endif %}
+            </div>
+            <div class="file-name">{{ file.original_filename }}</div>
+            <div class="file-meta">
+                <span class="encryption-indicator {% if file.encrypted %}encrypted{% else %}decrypted{% endif %}">
+                    <i class="fas fa-{% if file.encrypted %}lock{% else %}unlock{% endif %}"></i>
+                    {% if file.encrypted %}Encrypted{% else %}Plain{% endif %}
+                </span>
+                <div style="margin-top: 8px;">Size: {{ (file.file_size / 1024)|round(2) }} KB</div>
+                <div>Owner: {{ file.owner_role }}</div>
+                <div>Cloud: {{ file.cloud_status or 'N/A' }}</div>
+                <div>Chain: {{ file.blockchain_status or 'N/A' }}</div>
+            </div>
+            <div class="action-buttons">
+                <a href="{{ url_for('dbmanager.download_encrypted', file_id=file.doc_id) }}" class="btn btn-secondary btn-sm">
+                    <i class="fas fa-download"></i> Encrypted
+                </a>
+                {% if file.encrypted %}
+                <a href="{{ url_for('dbmanager.download_decrypted', file_id=file.doc_id) }}" class="btn btn-success btn-sm">
+                    <i class="fas fa-unlock"></i> Decrypted
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-folder-open"></i>
+        <h3>No Files Yet</h3>
+        <p>Upload your first file to get started.</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function updateFileName(input) {
+    if (input.files.length > 0) {
+        document.getElementById('fileName').textContent = 'Selected: ' + input.files[0].name;
+    }
+}
+</script>
+{% endblock %}

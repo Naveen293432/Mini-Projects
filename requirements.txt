@@ -1,0 +1,10 @@
+Flask
+flask-login
+tinydb
+py-algorand-sdk
+pycryptodome
+qrcode
+Pillow
+pytest
+requests
+boto3

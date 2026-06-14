@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}User Registration - CloudDB Secure{% endblock %}
+
+{% block content %}
+<div class="auth-shell">
+    <section class="auth-hero-panel">
+        <div class="auth-brand-pill">CloudDB Secure</div>
+        <h1>Create your secure user workspace.</h1>
+        <p>Register a user account to handle encrypted files, payment workflows, and support operations. Administrator
+            approval is required before full access is granted.</p>
+
+        <div class="auth-feature-list">
+            <div class="auth-feature-item"><i class="fas fa-lock"></i><span>End-to-end encrypted transfers</span></div>
+            <div class="auth-feature-item"><i class="fas fa-credit-card"></i><span>Maintenance fee lifecycle
+                    tracking</span></div>
+            <div class="auth-feature-item"><i class="fas fa-comments"></i><span>Complaint and response timeline</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="auth-form-panel">
+        <div class="auth-form-shell">
+            <div class="auth-form-icon">
+                <i class="fas fa-user-plus"></i>
+            </div>
+            <h2>User Registration</h2>
+            <p>Join our secure cloud database system.</p>
+
+            <div class="auth-note">
+                <i class="fas fa-circle-info"></i>
+                This form is for user accounts only. Administrator and database manager accounts sign in from the login
+                page.
+            </div>
+
+            <form method="POST" action="{{ url_for('auth.signup') }}">
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="form-label" for="username">
+                            <i class="fas fa-user"></i> Username *
+                        </label>
+                        <input type="text" id="username" name="username" class="form-control" required
+                            placeholder="Choose username">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="email">
+                            <i class="fas fa-envelope"></i> Email *
+                        </label>
+                        <input type="email" id="email" name="email" class="form-control" required
+                            placeholder="your@email.com">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="full_name">
+                        <i class="fas fa-id-card"></i> Full Name
+                    </label>
+                    <input type="text" id="full_name" name="full_name" class="form-control"
+                        placeholder="Enter your full name">
+                </div>
+
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="form-label" for="phone">
+                            <i class="fas fa-phone"></i> Phone
+                        </label>
+                        <input type="tel" id="phone" name="phone" class="form-control" placeholder="Phone number">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="address">
+                            <i class="fas fa-map-marker-alt"></i> Address
+                        </label>
+                        <input type="text" id="address" name="address" class="form-control" placeholder="Your address">
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="form-label" for="password">
+                            <i class="fas fa-lock"></i> Password *
+                        </label>
+                        <input type="password" id="password" name="password" class="form-control" required
+                            placeholder="Min 6 characters">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="confirm_password">
+                            <i class="fas fa-lock"></i> Confirm Password *
+                        </label>
+                        <input type="password" id="confirm_password" name="confirm_password" class="form-control"
+                            required placeholder="Repeat password">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary auth-submit-btn">
+                    <i class="fas fa-user-plus"></i> Create Account
+                </button>
+            </form>
+
+            <div class="auth-footer">
+                <p>Already have an account? <a href="{{ url_for('auth.login') }}">Sign in</a></p>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

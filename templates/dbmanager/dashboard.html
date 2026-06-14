@@ -1,0 +1,199 @@
+{% extends "dashboard_base.html" %}
+
+{% block title %}DB Manager Dashboard - CloudDB Secure{% endblock %}
+
+{% block sidebar %}
+<li><a href="{{ url_for('dbmanager.dashboard') }}" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+<li><a href="{{ url_for('dbmanager.db_monitoring') }}"><i class="fas fa-server"></i> DB Monitoring</a></li>
+<li><a href="{{ url_for('dbmanager.file_management') }}"><i class="fas fa-folder-open"></i> File Management</a></li>
+<li><a href="{{ url_for('dbmanager.encrypted_downloads') }}"><i class="fas fa-lock"></i> Encrypted Downloads</a></li>
+<li><a href="{{ url_for('dbmanager.maintenance_scheduling') }}"><i class="fas fa-calendar-alt"></i> Maintenance</a></li>
+<li><a href="{{ url_for('dbmanager.performance_analytics') }}"><i class="fas fa-chart-line"></i> Analytics</a></li>
+<li><a href="{{ url_for('dbmanager.secrets') }}"><i class="fas fa-key"></i> Secret Sharing</a></li>
+{% endblock %}
+
+{% block main %}
+<div class="page-header">
+    <h1 class="page-title"><i class="fas fa-database"></i> Database Manager Dashboard</h1>
+    <p class="page-subtitle">Manage files, encryption, and database operations</p>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-file-alt"></i>
+        </div>
+        <div class="stat-content">
+            <h3>{{ stats.total_files }}</h3>
+            <p>Total Files</p>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon" style="background: #D1FAE5;">
+            <i class="fas fa-lock" style="color: #059669;"></i>
+        </div>
+        <div class="stat-content">
+            <h3>{{ stats.encrypted_files }}</h3>
+            <p>Encrypted Files</p>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon" style="background: #DBEAFE;">
+            <i class="fas fa-calendar-check" style="color: #2563EB;"></i>
+        </div>
+        <div class="stat-content">
+            <h3>{{ stats.scheduled_maintenance }}</h3>
+            <p>Scheduled Tasks</p>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon" style="background: #E9D5FF;">
+            <i class="fas fa-users" style="color: #9333EA;"></i>
+        </div>
+        <div class="stat-content">
+            <h3>{{ stats.total_users }}</h3>
+            <p>System Users</p>
+        </div>
+    </div>
+</div>
+
+<div class="grid-2">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-shield-alt"></i> Encryption Status</h3>
+        </div>
+        <div style="text-align: center; padding: 30px;">
+            <div style="width: 100px; height: 100px; background: linear-gradient(135deg, #4ADE80, #22C55E); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                <i class="fas fa-check-shield" style="font-size: 2.5rem; color: white;"></i>
+            </div>
+            <h4 style="color: #059669; margin-bottom: 8px;">PKCS1_OAEP Active</h4>
+            <p style="color: var(--text-secondary);">Hybrid RSA-AES encryption enabled</p>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-bolt"></i> Quick Actions</h3>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            <a href="{{ url_for('dbmanager.file_management') }}" class="btn btn-primary">
+                <i class="fas fa-upload"></i> Upload & Encrypt Files
+            </a>
+            <a href="{{ url_for('dbmanager.encrypted_downloads') }}" class="btn btn-secondary">
+                <i class="fas fa-download"></i> Download Files
+            </a>
+            <a href="{{ url_for('dbmanager.maintenance_scheduling') }}" class="btn btn-secondary">
+                <i class="fas fa-calendar-plus"></i> Schedule Maintenance
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="page-header" style="margin-top: 26px;">
+    <h2 class="page-title" style="font-size: 1.5rem;"><i class="fas fa-layer-group"></i> Storage Layers</h2>
+    <p class="page-subtitle">This dashboard now shows each layer separately.</p>
+</div>
+
+<div class="grid-2">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-lock"></i> Encryption</h3>
+        </div>
+        <p style="color: var(--text-secondary); line-height: 1.8;">
+            Uploads are encrypted with the hybrid RSA-AES flow before they are written to disk.
+        </p>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-database"></i> Database</h3>
+        </div>
+        <p style="color: var(--text-secondary); line-height: 1.8;">
+            Database records are stored in <span class="path-pill" style="display:inline-block; margin-top:8px;">{{ db_path }}</span>.
+        </p>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-cloud"></i> Cloud</h3>
+        </div>
+        <p style="color: var(--text-secondary); line-height: 1.8;">
+            Cloud backup uses the local storage root at <span class="path-pill" style="display:inline-block; margin-top:8px;">{{ cloud_root }}</span> when the sync helper is active.
+        </p>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-link"></i> Blockchain</h3>
+        </div>
+        <p style="color: var(--text-secondary); line-height: 1.8;">
+            File hashes can be submitted to Algorand for integrity anchoring.
+        </p>
+    </div>
+</div>
+
+<div class="grid-2" style="margin-top: 24px;">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-database"></i> File Records</h3>
+        </div>
+        <div style="padding: 16px; overflow-x: auto;">
+            <table style="width:100%; border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th style="text-align:left; padding:8px; border-bottom:1px solid rgba(255,255,255,0.15);">Name</th>
+                        <th style="text-align:left; padding:8px; border-bottom:1px solid rgba(255,255,255,0.15);">Encrypted</th>
+                        <th style="text-align:left; padding:8px; border-bottom:1px solid rgba(255,255,255,0.15);">Cloud</th>
+                        <th style="text-align:left; padding:8px; border-bottom:1px solid rgba(255,255,255,0.15);">Blockchain</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for file in file_records %}
+                    <tr>
+                        <td style="padding:8px; border-bottom:1px solid rgba(255,255,255,0.08);">{{ file.original_filename }}</td>
+                        <td style="padding:8px; border-bottom:1px solid rgba(255,255,255,0.08);">{{ 'Yes' if file.encrypted else 'No' }}</td>
+                        <td style="padding:8px; border-bottom:1px solid rgba(255,255,255,0.08);">{{ file.cloud_status or 'N/A' }}</td>
+                        <td style="padding:8px; border-bottom:1px solid rgba(255,255,255,0.08);">{{ file.blockchain_status or 'N/A' }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" style="padding:8px; color: var(--text-secondary);">No file records found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-cloud"></i> Cloud Objects</h3>
+        </div>
+        <div style="padding: 16px; overflow-x: auto;">
+            <table style="width:100%; border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th style="text-align:left; padding:8px; border-bottom:1px solid rgba(255,255,255,0.15);">Key</th>
+                        <th style="text-align:left; padding:8px; border-bottom:1px solid rgba(255,255,255,0.15);">Size</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in cloud_objects %}
+                    <tr>
+                        <td style="padding:8px; border-bottom:1px solid rgba(255,255,255,0.08); word-break: break-all;">{{ item.key }}</td>
+                        <td style="padding:8px; border-bottom:1px solid rgba(255,255,255,0.08);">{{ item.size }} bytes</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="2" style="padding:8px; color: var(--text-secondary);">No cloud objects found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

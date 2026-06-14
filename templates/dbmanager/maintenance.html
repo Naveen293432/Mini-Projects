@@ -1,0 +1,84 @@
+{% extends "dashboard_base.html" %}
+
+{% block title %}Maintenance Scheduling - CloudDB Secure{% endblock %}
+
+{% block sidebar %}
+<li><a href="{{ url_for('dbmanager.dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+<li><a href="{{ url_for('dbmanager.db_monitoring') }}"><i class="fas fa-server"></i> DB Monitoring</a></li>
+<li><a href="{{ url_for('dbmanager.file_management') }}"><i class="fas fa-folder-open"></i> File Management</a></li>
+<li><a href="{{ url_for('dbmanager.encrypted_downloads') }}"><i class="fas fa-lock"></i> Encrypted Downloads</a></li>
+<li><a href="{{ url_for('dbmanager.maintenance_scheduling') }}" class="active"><i class="fas fa-calendar-alt"></i> Maintenance</a></li>
+<li><a href="{{ url_for('dbmanager.performance_analytics') }}"><i class="fas fa-chart-line"></i> Analytics</a></li>
+<li><a href="{{ url_for('dbmanager.secrets') }}"><i class="fas fa-key"></i> Secret Sharing</a></li>
+{% endblock %}
+
+{% block main %}
+<div class="page-header">
+    <h1 class="page-title"><i class="fas fa-calendar-alt"></i> Maintenance Scheduling</h1>
+    <p class="page-subtitle">Schedule and manage database maintenance tasks</p>
+</div>
+
+<div class="grid-2">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-plus-circle"></i> Schedule Maintenance</h3>
+        </div>
+        <form method="POST" action="{{ url_for('dbmanager.create_maintenance_route') }}">
+            <div class="form-group">
+                <label class="form-label" for="title">Task Title</label>
+                <input type="text" id="title" name="title" class="form-control" required placeholder="e.g., Database Backup">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="description">Description</label>
+                <textarea id="description" name="description" class="form-control" placeholder="Maintenance details..."></textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="scheduled_date">Scheduled Date</label>
+                <input type="datetime-local" id="scheduled_date" name="scheduled_date" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-calendar-plus"></i> Schedule Task
+            </button>
+        </form>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-tasks"></i> Upcoming Tasks</h3>
+        </div>
+        {% if maintenance %}
+            {% for task in maintenance %}
+            <div style="padding: 16px; border-bottom: 1px solid var(--pink-100);">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <div style="font-weight: 600;">{{ task.title }}</div>
+                        <div style="font-size: 0.9rem; color: var(--text-secondary);">{{ task.description or 'No description' }}</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px;">
+                            <i class="fas fa-clock"></i> {{ task.scheduled_date }}
+                        </div>
+                    </div>
+                    <span class="status-badge status-{{ task.status|lower|replace(' ', '-') }}">
+                        {{ task.status }}
+                    </span>
+                </div>
+                <form method="POST" action="{{ url_for('dbmanager.update_maintenance_route', maintenance_id=task.doc_id) }}" style="margin-top: 12px;">
+                    <select name="status" class="form-control form-select" style="max-width: 200px; display: inline-block;">
+                        <option value="Scheduled" {% if task.status == 'Scheduled' %}selected{% endif %}>Scheduled</option>
+                        <option value="In Progress" {% if task.status == 'In Progress' %}selected{% endif %}>In Progress</option>
+                        <option value="Completed" {% if task.status == 'Completed' %}selected{% endif %}>Completed</option>
+                        <option value="Cancelled" {% if task.status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                    </select>
+                    <button type="submit" class="btn btn-secondary btn-sm">Update</button>
+                </form>
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-calendar"></i>
+            <h3>No Tasks Scheduled</h3>
+            <p>Schedule your first maintenance task.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

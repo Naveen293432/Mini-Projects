@@ -1,0 +1,100 @@
+{% extends "dashboard_base.html" %}
+
+{% block title %}Complaints - CloudDB Secure{% endblock %}
+
+{% block sidebar %}
+<li><a href="{{ url_for('user.dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+<li><a href="{{ url_for('user.fee_payment') }}"><i class="fas fa-credit-card"></i> Fee Payment</a></li>
+<li><a href="{{ url_for('user.complaints') }}" class="active"><i class="fas fa-comment-dots"></i> Complaints</a></li>
+<li><a href="{{ url_for('user.file_upload') }}"><i class="fas fa-upload"></i> Upload & Encrypt</a></li>
+<li><a href="{{ url_for('user.file_download') }}"><i class="fas fa-download"></i> Download Files</a></li>
+<li><a href="{{ url_for('user.service_history') }}"><i class="fas fa-history"></i> Service History</a></li>
+<li><a href="{{ url_for('user.secrets') }}"><i class="fas fa-key"></i> Secret Sharing</a></li>
+{% endblock %}
+
+{% block main %}
+<div class="page-header">
+    <h1 class="page-title"><i class="fas fa-comment-dots"></i> Complaint Submission</h1>
+    <p class="page-subtitle">Submit and track your complaints</p>
+</div>
+
+<div class="grid-2">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-plus-circle"></i> Submit New Complaint</h3>
+        </div>
+        <form method="POST" action="{{ url_for('user.submit_complaint') }}">
+            <div class="form-group">
+                <label class="form-label" for="category">Category</label>
+                <select id="category" name="category" class="form-control form-select" required>
+                    <option value="">Select category...</option>
+                    <option value="Technical Issue">Technical Issue</option>
+                    <option value="Billing">Billing</option>
+                    <option value="Service Quality">Service Quality</option>
+                    <option value="Data Access">Data Access</option>
+                    <option value="Security Concern">Security Concern</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="priority">Priority</label>
+                <select id="priority" name="priority" class="form-control form-select">
+                    <option value="Low">Low</option>
+                    <option value="Medium" selected>Medium</option>
+                    <option value="High">High</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="subject">Subject</label>
+                <input type="text" id="subject" name="subject" class="form-control" required placeholder="Brief description of issue">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="description">Description</label>
+                <textarea id="description" name="description" class="form-control" required placeholder="Detailed description of your complaint..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-paper-plane"></i> Submit Complaint
+            </button>
+        </form>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-list"></i> My Complaints</h3>
+        </div>
+        {% if complaints %}
+            {% for complaint in complaints %}
+            <div style="padding: 16px; border-bottom: 1px solid var(--pink-100);">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                    <div>
+                        <div style="font-weight: 600;">{{ complaint.subject }}</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);">{{ complaint.category }} | {{ complaint.priority }} Priority</div>
+                    </div>
+                    <span class="status-badge status-{{ complaint.status|lower|replace(' ', '-') }}">
+                        {{ complaint.status }}
+                    </span>
+                </div>
+                <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 8px;">{{ complaint.description[:100] }}{% if complaint.description|length > 100 %}...{% endif %}</p>
+                {% if complaint.admin_response %}
+                <div style="background: var(--pink-50); padding: 12px; border-radius: 8px; margin-top: 8px;">
+                    <div style="font-size: 0.8rem; font-weight: 600; color: var(--pink-600); margin-bottom: 4px;">
+                        <i class="fas fa-reply"></i> Admin Response:
+                    </div>
+                    <p style="font-size: 0.9rem; color: var(--text-primary);">{{ complaint.admin_response }}</p>
+                </div>
+                {% endif %}
+                <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 8px;">
+                    Submitted: {{ complaint.created_at[:10] if complaint.created_at else 'N/A' }}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-comment-dots"></i>
+            <h3>No Complaints</h3>
+            <p>You haven't submitted any complaints yet.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

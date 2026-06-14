@@ -1,0 +1,8 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^Set-Location \"d:\\\\Mini Project\"; \\.\\\\\\.venv\\\\Scripts\\\\python\\.exe -m pytest -q; Write-Output \"EXIT_CODE:\\$LASTEXITCODE\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}
