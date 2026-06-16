@@ -11,26 +11,67 @@
 {% block main %}
 <div class="page-header">
     <h1 class="page-title">Account Settings</h1>
-    <p class="page-subtitle">Manage your preferences</p>
+    <p class="page-subtitle">Manage your preferences and payment details</p>
 </div>
 
-<div class="card" style="max-width:720px;">
-    <div class="card-header">
-        <h3 class="card-title">Currency Display</h3>
-    </div>
-    <form method="POST" action="{{ url_for('user.account') }}" style="padding:16px;">
-        <div class="form-group">
-            <label class="form-label">Preferred display</label>
-            <div style="display:flex; gap:12px; align-items:center;">
-                <label><input type="radio" name="currency_display" value="usd" {% if pref == 'usd' %}checked{% endif %}/> USD only</label>
-                <label><input type="radio" name="currency_display" value="inr" {% if pref == 'inr' %}checked{% endif %}/> INR only</label>
-                <label><input type="radio" name="currency_display" value="both" {% if pref == 'both' %}checked{% endif %}/> Both</label>
+<form method="POST" action="{{ url_for('user.account') }}">
+    <!-- Currency Display Section -->
+    <div class="card" style="max-width:720px; margin-bottom:24px;">
+        <div class="card-header">
+            <h3 class="card-title">Currency Display</h3>
+        </div>
+        <div style="padding:16px;">
+            <div class="form-group">
+                <label class="form-label">Preferred display</label>
+                <div style="display:flex; gap:12px; align-items:center;">
+                    <label><input type="radio" name="currency_display" value="usd" {% if pref == 'usd' %}checked{% endif %}/> USD only</label>
+                    <label><input type="radio" name="currency_display" value="inr" {% if pref == 'inr' %}checked{% endif %}/> INR only</label>
+                    <label><input type="radio" name="currency_display" value="both" {% if pref == 'both' %}checked{% endif %}/> Both</label>
+                </div>
             </div>
         </div>
-        <div style="margin-top:12px;">
-            <button class="btn btn-primary" type="submit">Save Preferences</button>
-            <a href="{{ url_for('user.dashboard') }}" class="btn btn-secondary">Cancel</a>
+    </div>
+
+    <!-- Bank Account Details Section -->
+    <div class="card" style="max-width:720px; margin-bottom:24px;">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-university"></i> Bank Account Details</h3>
+            <p style="margin: 8px 0 0 0; font-size: 0.9em; color: #666;">Add your bank account to receive payments directly via UPI or bank transfer</p>
         </div>
-    </form>
-</div>
+        <div style="padding:16px;">
+            <div class="form-group">
+                <label for="upi_id" class="form-label">UPI ID (e.g., yourname@bankname)</label>
+                <input type="text" id="upi_id" name="upi_id" class="form-input" value="{{ bank_details.upi_id or '' }}" placeholder="example@upi">
+                <small style="color: #666; display: block; margin-top: 4px;">For UPI payments - most convenient for Indian users</small>
+            </div>
+
+            <div class="form-group" style="margin-top:12px;">
+                <label for="bank_account_name" class="form-label">Account Holder Name</label>
+                <input type="text" id="bank_account_name" name="bank_account_name" class="form-input" value="{{ bank_details.bank_account_name or '' }}" placeholder="Full name as per bank records">
+            </div>
+
+            <div class="form-group" style="margin-top:12px;">
+                <label for="bank_account_number" class="form-label">Bank Account Number</label>
+                <input type="text" id="bank_account_number" name="bank_account_number" class="form-input" value="{{ bank_details.bank_account_number or '' }}" placeholder="Your account number">
+            </div>
+
+            <div class="form-group" style="margin-top:12px;">
+                <label for="bank_ifsc" class="form-label">IFSC Code</label>
+                <input type="text" id="bank_ifsc" name="bank_ifsc" class="form-input" value="{{ bank_details.bank_ifsc or '' }}" placeholder="e.g., SBIN0001234">
+                <small style="color: #666; display: block; margin-top: 4px;">11-digit IFSC code of your bank branch</small>
+            </div>
+
+            <div style="background-color: #f0f4ff; border-left: 4px solid #4A90E2; padding: 12px; margin-top: 16px; border-radius: 4px;">
+                <p style="margin: 0; font-size: 0.9em; color: #333;">
+                    <i class="fas fa-lock"></i> Your bank details are securely stored and used only to generate payment QR codes for receiving payments.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div style="max-width:720px; display:flex; gap:12px;">
+        <button class="btn btn-primary" type="submit"><i class="fas fa-save"></i> Save All Settings</button>
+        <a href="{{ url_for('user.dashboard') }}" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
 {% endblock %}

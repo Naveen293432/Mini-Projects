@@ -11,7 +11,7 @@ from database import (
     create_secret, get_secrets_for_role, get_all_secrets,
     create_audit_log, get_user_keys, store_user_keys, get_payment_by_id, update_payment
 )
-from database import set_user_currency, get_user_currency, get_user_by_id
+from database import set_user_currency, get_user_currency, get_user_by_id, set_user_bank_details, get_user_bank_details
 from flask import make_response
 import algorand
 from utils.emailer import send_email
@@ -68,6 +68,31 @@ def _normalize_algorand_address(receiver):
         pass
 
     return candidate
+
+
+def _build_upi_uri(upi_id, payee_name, amount_usd, transaction_note=''):
+    """Build a UPI payment URI for QR code generation."""
+    if not upi_id or not upi_id.strip():
+        return None
+    
+    upi_id = upi_id.strip()
+    payee_name = (payee_name or '').strip()
+    
+    # Build UPI URI: upi://pay?pa=<UPI_ID>&pn=<PAYEE_NAME>&am=<AMOUNT>&tn=<NOTE>
+    params = {
+        'pa': upi_id,
+    }
+    
+    if payee_name:
+        params['pn'] = payee_name
+    
+    if amount_usd and amount_usd > 0:
+        params['am'] = str(float(amount_usd))
+    
+    if transaction_note:
+        params['tn'] = transaction_note
+    
+    return f"upi://pay?{urlencode(params)}"
 
 
 def user_required(f):
@@ -249,6 +274,91 @@ def invoice_qr(payment_id):
         return send_file(buf, mimetype='image/png')
     except Exception:
         logging.exception('Failed to render QR PNG for invoice %s', invoice)
+        return ('', 500)
+
+
+@user_bp.route('/fees/bank-transfer/<payment_id>')
+@login_required
+@user_required
+def show_bank_payment(payment_id):
+    """Display bank transfer details for a payment."""
+    payment = get_payment_by_id(payment_id)
+    if not payment:
+        flash('Payment not found.', 'error')
+        return redirect(url_for('user.fee_payment'))
+
+    # Only owner can view their payment
+    if str(payment.get('user_id')) != str(current_user.id):
+        flash('Access denied.', 'error')
+        return redirect(url_for('user.fee_payment'))
+
+    # Get admin's bank details to display for receiving payment
+    user_doc = get_user_by_id(current_user.id)
+    bank_details = get_user_bank_details(current_user.id)
+    
+    # Add formatted amounts to payment dict for display
+    amount_usd = payment.get('amount', 0)
+    payment['formatted_usd'] = format_currency(amount_usd, 'usd')
+    
+    # Check if admin has bank details set up
+    has_bank_details = bool(bank_details.get('upi_id') or bank_details.get('bank_account_number'))
+    
+    qr_url = None
+    if bank_details.get('upi_id'):
+        qr_url = url_for('user.bank_payment_qr', payment_id=payment_id)
+    
+    return render_template('user/bank_payment.html', 
+                         payment=payment, 
+                         bank_details=bank_details,
+                         has_bank_details=has_bank_details,
+                         qr_url=qr_url)
+
+
+@user_bp.route('/fees/bank-transfer/<payment_id>/qr.png')
+@login_required
+@user_required
+def bank_payment_qr(payment_id):
+    """Generate UPI QR code for bank transfer payment."""
+    payment = get_payment_by_id(payment_id)
+    if not payment:
+        return ('', 404)
+
+    # Only owner can fetch their payment QR
+    if str(payment.get('user_id')) != str(current_user.id):
+        return ('', 403)
+
+    bank_details = get_user_bank_details(current_user.id)
+    upi_id = bank_details.get('upi_id', '')
+    
+    if not upi_id:
+        logging.warning('User %s has no UPI ID set; cannot generate QR', current_user.id)
+        return ('', 400)
+
+    amount_usd = payment.get('amount', 0)
+    payee_name = bank_details.get('bank_account_name', '')
+    invoice_id = payment.get('invoice_id', '')
+    
+    # Build UPI URI
+    uri = _build_upi_uri(upi_id, payee_name, amount_usd, f'Payment-{invoice_id}')
+    if not uri:
+        logging.warning('Failed to build UPI URI for payment %s', payment_id)
+        return ('', 400)
+
+    try:
+        try:
+            qr_img = qrcode.make(uri)
+        except Exception:
+            qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_M)
+            qr.add_data(uri)
+            qr.make(fit=True)
+            qr_img = qr.make_image(fill_color="black", back_color="white")
+
+        buf = io.BytesIO()
+        qr_img.save(buf, format='PNG')
+        buf.seek(0)
+        return send_file(buf, mimetype='image/png')
+    except Exception:
+        logging.exception('Failed to render UPI QR PNG for payment %s', payment_id)
         return ('', 500)
 
 
@@ -524,14 +634,22 @@ def share_secret():
 @user_bp.route('/account', methods=['GET', 'POST'])
 @login_required
 def account():
-    # Allow users to set their currency display preference
+    # Allow users to set their currency display preference and bank account details
     if request.method == 'POST':
         mode = request.form.get('currency_display', 'both')
+        bank_account_number = request.form.get('bank_account_number', '').strip()
+        bank_ifsc = request.form.get('bank_ifsc', '').strip()
+        bank_account_name = request.form.get('bank_account_name', '').strip()
+        upi_id = request.form.get('upi_id', '').strip()
+        
         try:
             if current_user.is_authenticated:
                 set_user_currency(current_user.id, mode)
-        except Exception:
+                set_user_bank_details(current_user.id, bank_account_number, bank_ifsc, bank_account_name, upi_id)
+        except Exception as e:
+            flash(f'Error updating account: {str(e)}', 'error')
             pass
+        
         resp = make_response(redirect(url_for('user.account')))
         resp.set_cookie('currency_display', mode, max_age=30*24*3600)
         flash('Account preferences updated.', 'success')
@@ -540,4 +658,5 @@ def account():
     # GET
     user_doc = get_user_by_id(current_user.id)
     pref = getattr(user_doc, 'currency_display', None) or get_user_currency(current_user.id)
-    return render_template('user/account.html', pref=pref)
+    bank_details = get_user_bank_details(current_user.id)
+    return render_template('user/account.html', pref=pref, bank_details=bank_details)

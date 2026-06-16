@@ -33,7 +33,7 @@ Key = Query()
 
 
 class UserModel(UserMixin):
-    def __init__(self, doc_id, username, email, password_hash, role, full_name, phone, address, created_at, currency_display='both', approved=True):
+    def __init__(self, doc_id, username, email, password_hash, role, full_name, phone, address, created_at, currency_display='both', approved=True, bank_account_number='', bank_ifsc='', bank_account_name='', upi_id=''):
         self.id = str(doc_id)
         self.doc_id = doc_id
         self.username = username
@@ -46,6 +46,10 @@ class UserModel(UserMixin):
         self.created_at = created_at
         self.currency_display = currency_display
         self.approved = approved
+        self.bank_account_number = bank_account_number
+        self.bank_ifsc = bank_ifsc
+        self.bank_account_name = bank_account_name
+        self.upi_id = upi_id
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
@@ -65,7 +69,11 @@ class UserModel(UserMixin):
             address=doc.get('address', ''),
             created_at=doc.get('created_at', ''),
             currency_display=doc.get('currency_display', 'both'),
-            approved=doc.get('approved', True)
+            approved=doc.get('approved', True),
+            bank_account_number=doc.get('bank_account_number', ''),
+            bank_ifsc=doc.get('bank_ifsc', ''),
+            bank_account_name=doc.get('bank_account_name', ''),
+            upi_id=doc.get('upi_id', '')
         )
 
 
@@ -83,6 +91,10 @@ def create_user(username, email, password, role, full_name, phone, address, appr
         'address': address,
         'currency_display': 'both',
         'approved': approved,
+        'bank_account_number': '',
+        'bank_ifsc': '',
+        'bank_account_name': '',
+        'upi_id': '',
         'created_at': datetime.now().isoformat()
     })
     return doc_id
@@ -99,6 +111,40 @@ def get_user_currency(user_id):
     if doc:
         return doc.get('currency_display', 'both')
     return 'both'
+
+
+def set_user_bank_details(user_id, bank_account_number, bank_ifsc, bank_account_name, upi_id):
+    """Store user's bank account details for receiving payments."""
+    data = {}
+    if bank_account_number:
+        data['bank_account_number'] = bank_account_number
+    if bank_ifsc:
+        data['bank_ifsc'] = bank_ifsc
+    if bank_account_name:
+        data['bank_account_name'] = bank_account_name
+    if upi_id:
+        data['upi_id'] = upi_id
+    
+    if data:
+        users_table.update(data, doc_ids=[int(user_id)])
+
+
+def get_user_bank_details(user_id):
+    """Retrieve user's bank account details."""
+    doc = users_table.get(doc_id=int(user_id))
+    if doc:
+        return {
+            'bank_account_number': doc.get('bank_account_number', ''),
+            'bank_ifsc': doc.get('bank_ifsc', ''),
+            'bank_account_name': doc.get('bank_account_name', ''),
+            'upi_id': doc.get('upi_id', '')
+        }
+    return {
+        'bank_account_number': '',
+        'bank_ifsc': '',
+        'bank_account_name': '',
+        'upi_id': ''
+    }
 
 
 def get_user_by_username(username):

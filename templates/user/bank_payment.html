@@ -1,0 +1,82 @@
+{% extends "dashboard_base.html" %}
+
+{% block title %}Bank Transfer Payment - CloudDB Secure{% endblock %}
+
+{% block main %}
+<div class="page-header">
+    <h1 class="page-title">Bank Transfer Payment</h1>
+    <p class="page-subtitle">Pay directly to the bank account using UPI or bank transfer</p>
+</div>
+
+<div class="card" style="max-width:640px;">
+    <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-university"></i> Bank Transfer Details</h3>
+    </div>
+    <div style="padding:16px; color:var(--text-primary);">
+        <p style="margin-bottom:10px;"><strong>Fee:</strong> {{ payment.fee_name }}</p>
+        <p style="margin-bottom:10px;"><strong>Amount Due:</strong></p>
+        <div style="margin-left:20px; padding:12px; background:rgba(15, 31, 67, 0.82); border-left:3px solid #38bdf8; border-radius:8px; color:var(--text-primary);">
+            {% if currency_display == 'usd' %}
+                <p style="margin:4px 0; color:var(--text-primary);"><strong>USD:</strong> ${{ "%.2f"|format(payment.amount) }}</p>
+            {% elif currency_display == 'inr' %}
+                <p style="margin:4px 0; color:var(--text-primary);"><strong>INR:</strong> ₹{{ "%.2f"|format(payment.amount|to_inr) }}</p>
+            {% else %}
+                <p style="margin:4px 0; color:var(--text-primary);"><strong>USD:</strong> ${{ "%.2f"|format(payment.amount) }}</p>
+                <p style="margin:4px 0; color:var(--text-primary);"><strong>INR:</strong> ₹{{ "%.2f"|format(payment.amount|to_inr) }}</p>
+            {% endif %}
+        </div>
+
+        {% if has_bank_details %}
+            {% if bank_details.upi_id %}
+            <div style="margin-top:20px;">
+                <h4 style="margin-bottom:12px;"><i class="fas fa-qrcode"></i> UPI Payment (Recommended)</h4>
+                <p style="margin-bottom:8px; font-size:14px;">Scan this QR code with any UPI app to pay instantly:</p>
+                {% if qr_url %}
+                <div style="text-align:center; margin-top:12px;">
+                    <img src="{{ qr_url }}" alt="UPI Payment QR" style="max-width:320px; border:2px solid #4CAF50; padding:12px; background:#fff; border-radius:8px;" />
+                </div>
+                {% endif %}
+                <div style="margin-top:12px; padding:10px; background:#f5f5f5; border-radius:4px;">
+                    <p style="margin:0; font-size:13px;"><strong>UPI ID:</strong> <code>{{ bank_details.upi_id }}</code></p>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if bank_details.bank_account_number %}
+            <div style="margin-top:20px; padding:12px; background:#fff3cd; border:1px solid #ffc107; border-radius:8px;">
+                <h4 style="margin-top:0; margin-bottom:12px;"><i class="fas fa-building"></i> Direct Bank Transfer Details</h4>
+                <div style="background:#fff; padding:10px; border-radius:4px; font-size:13px;">
+                    <p style="margin:8px 0;"><strong>Account Holder:</strong> {{ bank_details.bank_account_name or 'N/A' }}</p>
+                    <p style="margin:8px 0;"><strong>Account Number:</strong> <code>{{ bank_details.bank_account_number }}</code></p>
+                    <p style="margin:8px 0;"><strong>IFSC Code:</strong> <code>{{ bank_details.bank_ifsc }}</code></p>
+                    <p style="margin:8px 0;"><strong>Amount:</strong> ₹{{ "%.2f"|format(payment.amount|to_inr) }} or as per current exchange</p>
+                    <p style="margin:8px 0;"><strong>Reference:</strong> <code>{{ payment.invoice_id }}</code></p>
+                </div>
+            </div>
+            {% endif %}
+
+            <div style="margin-top:16px; padding:12px; background:#e8f5e9; border-radius:4px; border-left:4px solid #4CAF50;">
+                <p style="margin:0; font-size:13px; color:#1b5e20;">
+                    <i class="fas fa-check-circle"></i> <strong>Payment Instructions:</strong><br>
+                    1. Scan the QR code with any UPI app, or<br>
+                    2. Use the bank details above for direct transfer<br>
+                    3. Include the reference ID in the payment note<br>
+                    4. Payment will be credited to your account
+                </p>
+            </div>
+        {% else %}
+        <div style="margin-top:20px; padding:12px; background:#f3e5f5; border:1px solid #9c27b0; border-radius:8px;">
+            <p style="margin:0; font-size:14px; color:#4a148c;">
+                <i class="fas fa-info-circle"></i> <strong>No bank details found</strong><br>
+                Please <a href="{{ url_for('user.account') }}" style="color:#7b1fa2; text-decoration:underline;">add your bank account details</a> to enable bank transfer payments.
+            </p>
+        </div>
+        {% endif %}
+
+        <div style="margin-top:20px;">
+            <a href="{{ url_for('user.fee_payment') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back to Fees</a>
+            <a href="{{ url_for('user.show_invoice', payment_id=payment.doc_id) }}" class="btn btn-secondary" style="margin-left:8px;"><i class="fas fa-coins"></i> View Algorand Payment</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

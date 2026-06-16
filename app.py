@@ -37,7 +37,12 @@ def _load_project_env_bat():
         logging.exception('Failed to read .env.bat')
 
 
-_load_project_env_bat()
+# Only load local .env.bat during local development
+if os.path.exists('.env.bat'):
+    try:
+        _load_project_env_bat()
+    except Exception:
+        logging.exception("Failed to load .env.bat")
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET","secret")
@@ -179,3 +184,6 @@ if os.environ.get('START_FILE_RETRY_WORKER', 'false').lower() in ('1', 'true', '
         t2.start()
     except Exception:
         pass
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
