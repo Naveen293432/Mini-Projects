@@ -15,7 +15,7 @@ from database import set_user_currency, get_user_currency, get_user_by_id, set_u
 from flask import make_response
 import algorand
 from utils.emailer import send_email
-from utils.currency import usd_to_algo, algo_to_microalgo, format_currency
+from utils.currency import usd_to_algo, algo_to_microalgo, format_currency, usd_to_inr
 import qrcode
 import io
 import base64
@@ -70,29 +70,45 @@ def _normalize_algorand_address(receiver):
     return candidate
 
 
-def _build_upi_uri(upi_id, payee_name, amount_usd, transaction_note=''):
-    """Build a UPI payment URI for QR code generation."""
+def _build_upi_uri(upi_id, payee_name, amount_inr, transaction_note=''):
+    """Build a UPI payment URI for QR code generation.
+    
+    Args:
+        upi_id: User's UPI ID (e.g., user@bank)
+        payee_name: Name to show for payment (max 60 chars, only alphanumeric, space, hyphen, dot)
+        amount_inr: Amount in Indian Rupees
+        transaction_note: Transaction reference (max 80 chars)
+    """
     if not upi_id or not upi_id.strip():
         return None
     
     upi_id = upi_id.strip()
     payee_name = (payee_name or '').strip()
     
-    # Build UPI URI: upi://pay?pa=<UPI_ID>&pn=<PAYEE_NAME>&am=<AMOUNT>&tn=<NOTE>
-    params = {
-        'pa': upi_id,
-    }
+    # Sanitize payee name: only alphanumeric, spaces, hyphens, dots
+    if payee_name:
+        payee_name = ''.join(c for c in payee_name if c.isalnum() or c in (' ', '-', '.'))[:60]
+    
+    # Sanitize note: remove special chars that might break URI
+    if transaction_note:
+        transaction_note = ''.join(c for c in transaction_note if c.isalnum() or c in (' ', '-', '_', '.'))[:80]
+    
+    # Build UPI string carefully: upi://pay?pa=UPI_ID&pn=NAME&am=AMOUNT&tn=NOTE
+    # Note: Don't use urlencode as it may cause issues with UPI parsing
+    uri_parts = []
+    uri_parts.append(f"pa={upi_id}")
     
     if payee_name:
-        params['pn'] = payee_name
+        uri_parts.append(f"pn={payee_name}")
     
-    if amount_usd and amount_usd > 0:
-        params['am'] = str(float(amount_usd))
+    if amount_inr and amount_inr > 0:
+        # Format amount without currency symbol, just the number
+        uri_parts.append(f"am={float(amount_inr):.2f}")
     
     if transaction_note:
-        params['tn'] = transaction_note
+        uri_parts.append(f"tn={transaction_note}")
     
-    return f"upi://pay?{urlencode(params)}"
+    return f"upi://pay?{'&'.join(uri_parts)}"
 
 
 def user_required(f):
@@ -335,11 +351,14 @@ def bank_payment_qr(payment_id):
         return ('', 400)
 
     amount_usd = payment.get('amount', 0)
+    # Convert USD to INR for UPI QR code
+    amount_inr = usd_to_inr(amount_usd)
+    
     payee_name = bank_details.get('bank_account_name', '')
     invoice_id = payment.get('invoice_id', '')
     
-    # Build UPI URI
-    uri = _build_upi_uri(upi_id, payee_name, amount_usd, f'Payment-{invoice_id}')
+    # Build UPI URI with INR amount
+    uri = _build_upi_uri(upi_id, payee_name, amount_inr, f'Inv-{invoice_id}')
     if not uri:
         logging.warning('Failed to build UPI URI for payment %s', payment_id)
         return ('', 400)
